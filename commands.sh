@@ -15,42 +15,55 @@ display_main_menu() {
     echo "6) 申请证书"
     echo "7) 安装Xray"
     echo "8) 安装hysteria2"
-    echo "9) 退出脚本"
+    echo "9) 安装1Panel"
+    echo "0) 退出脚本"
     echo "========================================="
 }
 
-# 系统配置查看
+# 系统信息查询
 view_vps_info() {
-    echo "\n[系统配置]"
-    echo "================= 操作系统和内核 ================="
-    lsb_release -a 2>/dev/null || cat /etc/*release
-    uname -a
+    echo "系统信息查询"
+    echo "-------------"
+    echo "主机名:       $(hostname)"
+    echo "系统版本:     $(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d '"' -f2)"
+    echo "Linux版本:    $(uname -r)"
+    echo "-------------"
 
-    echo "\n================= CPU 信息 ================="
-    lscpu | grep -E 'Model name|Socket|Core|Thread|CPU MHz|Architecture'
+    echo "CPU架构:      $(uname -m)"
+    echo "CPU型号:      $(lscpu | grep 'Model name' | sed 's/Model name:[ \t]*//')"
+    echo "CPU核心数:    $(nproc)"
+    echo "CPU频率:      $(lscpu | grep 'CPU MHz' | awk -F: "/MHz/ {print \$2}") MHz"
+    echo "-------------"
 
-    echo "\n================= 内存信息 ================="
-    free -h
+    echo "CPU占用:      $(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')%"
+    echo "系统负载:     $(uptime | awk -F'load average:' '{print $2}' | xargs)"
+    echo "物理内存:     $(free -m | awk '/Mem:/ {printf "%.2f/%.2f MB (%.2f%%)", $3, $2, $3/$2*100}')"
+    echo "虚拟内存:     $(free -m | awk '/Swap:/ {printf "%.0fMB/%.0fMB (%.0f%%)", $3, $2, $3/$2*100}')"
+    echo "硬盘占用:     $(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')"
+    echo "-------------"
 
-    echo "\n================= 磁盘信息 ================="
-    df -hT --total | grep -v tmpfs
+    echo "总接收:       $(ifconfig | grep 'RX packets' | awk '{print $5/1024/1024 " MB"}' | head -n1)"
+    echo "总发送:       $(ifconfig | grep 'TX packets' | awk '{print $5/1024/1024 " MB"}' | head -n1)"
+    echo "-------------"
 
-    echo "\n================= 网络信息 ================="
-    ip addr show
-    echo "公共 IP 地址：$(curl -s https://api.ipify.org)"
+    echo "网络算法:     $(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')"
+    echo "-------------"
 
-    echo "\n================= 测试网络连通性 ================="
-    ping -c 4 google.com || echo "无法连接到 Google，请检查网络连接"
+    echo "运营商:       $(curl -s ipinfo.io/org)"
+    echo "IPv4地址:     $(curl -s ipv4.icanhazip.com)"
+    echo "DNS地址:      $(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs)"
+    echo "地理位置:     $(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)"
+    echo "系统时间:     $(timedatectl | grep "Local time" | awk '{print $3, $4, $5}')"
+    echo "-------------"
 
-    echo "\n================= 已安装的软件包 ================="
-    echo "软件包数量：$(dpkg -l | wc -l)"
+    echo "运行时长:     $(uptime -p | sed 's/up //')"
 }
 
 # 时间校准
 calibrate_time() {
     echo "\n[校准时间]"
-    sudo cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-    sudo ntpdate time.windows.com
+    sudo timedatectl set-timezone Asia/Shanghai
+    sudo timedatectl set-ntp true
     echo "时间校准完成，当前时区为 Asia/Shanghai"
 }
 
@@ -67,7 +80,7 @@ clean_system() {
     echo "\n[清理系统]"
     sudo apt autoremove --purge -y
     sudo apt clean -y && sudo apt autoclean -y
-    sudo journalctl --rotate && sudo journalctl --vacuum-time=1s
+    sudo journalctl --rotate && sudo journalctl --vacuum-time=10m
     sudo journalctl --vacuum-size=50M
     echo "系统清理完成！"
 }
@@ -123,7 +136,7 @@ apply_certificate() {
                 echo "acme.sh 已卸载。"
                 ;;
             6)
-                break
+                return
                 ;;
             *)
                 echo "无效选项，请重新输入。"
@@ -163,7 +176,7 @@ install_xray() {
                 echo "Xray 已卸载。"
                 ;;
             6)
-                break
+                return
                 ;;
             *)
                 echo "无效选项，请重新输入。"
@@ -208,7 +221,39 @@ install_hysteria2() {
                 echo "hysteria2 已卸载。"
                 ;;
             7)
-                break
+                return
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
+        esac
+    done
+}
+
+# 安装 1Panel
+install_1panel() {
+    while true; do
+        echo "\n[安装 1Panel]"
+        echo "1) 安装面板"
+        echo "2) 卸载面板"
+        echo "3) 卸载 Docker"
+        echo "4) 返回主菜单"
+        read -p "请输入数字 [1-4]: " panel_choice
+        case "$panel_choice" in
+            1)
+                curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
+                echo "1Panel 安装完成！"
+                ;;
+            2)
+                sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
+                echo "1Panel 卸载完成！"
+                ;;
+            3)
+                sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && sudo rm -rf /var/lib/docker /etc/docker /var/run/docker.sock && sudo groupdel docker
+                echo "Docker 已卸载。"
+                ;;
+            4)
+                return
                 ;;
             *)
                 echo "无效选项，请重新输入。"
@@ -220,7 +265,7 @@ install_hysteria2() {
 # 主循环
 while true; do
     display_main_menu
-    read -p "请输入数字 [1-9] 选择功能: " choice
+    read -p "请输入数字 [1-0] 选择功能: " choice
     case "$choice" in
         1) view_vps_info ;;
         2) calibrate_time ;;
@@ -230,13 +275,16 @@ while true; do
         6) apply_certificate ;;
         7) install_xray ;;
         8) install_hysteria2 ;;
-        9)
+        9) install_1panel ;;
+        0)
             echo "退出脚本，感谢使用！"
             exit 0
             ;;
         *)
-            echo "无效选项，请输入数字 1-9！"
+            echo "无效选项，请输入数字 1-0！"
             ;;
     esac
-    read -n 1 -s -r -p "按任意键返回主菜单..."
+    if [[ "$choice" != "6" && "$choice" != "7" && "$choice" != "8" && "$choice" != "9" ]]; then
+        read -n 1 -s -r -p "按任意键返回主菜单..."
+    fi
 done
