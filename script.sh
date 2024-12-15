@@ -75,8 +75,8 @@ display_system_optimization_menu() {
             2) update_system ;;
             3) clean_system ;;
             4) enable_bbr ;;
-            5) root_login ;;  # root_login 内部已经控制返回逻辑
-            6) return ;;  # 返回上级菜单
+            5) root_login ;;
+            6) return ;;
             *) echo "无效选项，请重新输入。" ;;
         esac
     done
@@ -151,8 +151,8 @@ apply_certificate() {
     echo "========================================="
     echo "1) 安装脚本"
     echo "2) 申请证书"
-    echo "3) 安装证书"
-    echo "4) 更换服务器"
+    echo "3) 更换服务器"
+    echo "4) 安装证书"
     echo "5) 卸载脚本"
     echo "6) 返回主菜单"
     echo "========================================="
@@ -160,7 +160,7 @@ apply_certificate() {
     case "$cert_choice" in
         1)
             read -p "请输入邮箱地址: " email
-            command -v cron >/dev/null 2>&1 || (apt update && apt install -y cron) && curl https://get.acme.sh | sh -s email=$email
+            curl https://get.acme.sh | sh -s email=$email
             echo "acme.sh 安装完成！"
             ;;
         2)
@@ -169,16 +169,15 @@ apply_certificate() {
             echo "证书申请完成！"
             ;;
         3)
-            mkdir -p /path/to
-            /root/.acme.sh/acme.sh --installcert -d $domain --key-file /path/to/private.key --fullchain-file /path/to/fullchain.crt
-            sudo chmod 644 /path/to/fullchain.crt /path/to/private.key
-            sudo chown root:root /path/to/fullchain.crt /path/to/private.key
-            echo "证书安装完成！"
-            ;;
-        4)
             ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
             echo "已切换至 Let's Encrypt 服务。"
-            ;;        
+            ;;
+        4)
+            mkdir /path/to
+            ~/.acme.sh/acme.sh --installcert -d $domain \
+                --key-file /path/to/private.key --fullchain-file /path/to/fullchain.crt
+            echo "证书安装完成！"
+            ;;
         5)
             ~/.acme.sh/acme.sh --uninstall
             echo "acme.sh 已卸载。"
@@ -209,7 +208,7 @@ install_xray() {
         read -p "请选择功能 [1-6]: " xray_choice
         case "$xray_choice" in
             1)
-                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
                 sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc"
                 echo "Xray 安装/升级完成！"
                 ;;
@@ -287,48 +286,58 @@ install_hysteria2() {
 
 # 安装 1Panel
 install_1panel() {
-    while true; do        
-    echo "========================================="
-    echo " 安装 1Panel "
-    echo "========================================="
-    echo "1) 安装面板"
-    echo "2) 卸载面板"
-    echo "3) 卸载 Docker"
-    echo "4) 返回主菜单"
-    echo "========================================="
-    read -p "请选择功能 [1-4]: " panel_choice
-    case "$panel_choice" in
-        1)
-            curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
-            echo "1Panel 安装完成！"
-            ;;
-        2)
-            sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d && sudo find / -name "*1panel*" -exec rm -rf {} +
-            echo "1Panel 卸载完成！"
-            ;;
-        3)
-            sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
-            sudo find / \( -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
-            sudo groupdel docker
-            echo "Docker 已卸载。"
-            ;;
-        4)
-            return
-            ;;
-        *)
-            echo "无效选项，请重新输入。"
-            ;;
+    while true; do
+        echo "========================================="
+        echo " 安装 1Panel "
+        echo "========================================="
+        echo "1) 安装面板"
+        echo "2) 安装防火墙"
+        echo "3) 卸载面板"
+        echo "4) 卸载防火墙"
+        echo "5) 卸载 Docker"
+        echo "6) 返回主菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-4]: " panel_choice
+        case "$panel_choice" in
+            1)
+                curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
+                echo "1Panel 安装完成！"
+                ;;
+            2)
+                sudo apt install ufw
+                echo "ufw 安装完成！"
+                ;;
+            3)
+                sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
+                echo "1Panel 卸载完成！"
+                ;;
+            4)
+                sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
+                echo "ufw 卸载完成！"
+                ;;
+            5)
+                sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
+                sudo find / \( -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
+                sudo groupdel docker
+                echo "Docker 已卸载。"
+                ;;
+            6)
+                return
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
     esac
-    done
+    done    
 }
 
-# 主循环
+# 主脚本循环
 while true; do
     display_main_menu
     read -p "请输入数字 [1-0] 选择功能: " choice
     case "$choice" in
         1) view_vps_info ;;
-        2) display_system_optimization_menu ;; 
+        2) display_system_optimization_menu ;;
         3) apply_certificate ;;
         4) install_xray ;;
         5) install_hysteria2 ;;
