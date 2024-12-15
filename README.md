@@ -8,4 +8,4 @@
 - 1Panel安装及卸载；
 - 其他功能陆续添加中。
 ## 使用命令
-```bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/main/commands.sh)```
+```bash <(curl -sL [https://raw.githubusercontent.com/sezhai/vps-script/main/commands.sh])```
