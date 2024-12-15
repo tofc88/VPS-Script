@@ -19,41 +19,57 @@ display_main_menu() {
 
 # 系统信息
 view_vps_info() {
-    echo "系统信息查询"
-    echo "-------------"
-    echo "主机名:       $(hostname)"
-    echo "系统版本:     $(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d '"' -f2)"
-    echo "Linux版本:    $(uname -r)"
-    echo "-------------"
-
-    echo "CPU架构:      $(uname -m)"
-    echo "CPU型号:      $(lscpu | grep 'Model name' | sed 's/Model name:[ \t]*//')"
-    echo "CPU核心数:    $(nproc)"
-    echo "CPU频率:      $(lscpu | grep 'CPU MHz' | awk -F: "/MHz/ {print \$2}") MHz"
+    # 显示主机信息
+    echo -e "\e[1;34m主机名:\e[0m \e[32m$(hostname)\e[0m"
+    echo -e "\e[1;34m系统版本:\e[0m \e[32m$(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d '"' -f2)\e[0m"
+    echo -e "\e[1;34mLinux版本:\e[0m \e[32m$(uname -r)\e[0m"
     echo "-------------"
 
-    echo "CPU占用:      $(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')%"
-    echo "系统负载:     $(uptime | awk -F'load average:' '{print $2}' | xargs)"
-    echo "物理内存:     $(free -m | awk '/Mem:/ {printf "%.2f/%.2f MB (%.2f%%)", $3, $2, $3/$2*100}')"
-    echo "虚拟内存:     $(free -m | awk '/Swap:/ {printf "%.0fMB/%.0fMB (%.0f%%)", $3, $2, $3/$2*100}')"
-    echo "硬盘占用:     $(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')"
+    # 显示CPU信息
+    echo -e "\e[1;34mCPU架构:\e[0m \e[32m$(uname -m)\e[0m"
+    echo -e "\e[1;34mCPU型号:\e[0m \e[32m$(lscpu | grep 'Model name' | sed 's/Model name:[ \t]*//')\e[0m"
+    echo -e "\e[1;34mCPU核心数:\e[0m \e[32m$(nproc)\e[0m"
+    echo -e "\e[1;34mCPU频率:\e[0m \e[32m$(lscpu | grep 'CPU MHz' | awk -F: '{print $2}' | xargs) MHz\e[0m"  # Add xargs to remove leading/trailing whitespace
     echo "-------------"
 
-    echo "总接收:       $(ifconfig | grep 'RX packets' | awk '{print $5/1024/1024 " MB"}' | head -n1)"
-    echo "总发送:       $(ifconfig | grep 'TX packets' | awk '{print $5/1024/1024 " MB"}' | head -n1)"
+    # 显示系统资源信息
+    echo -e "\e[1;34mCPU占用:\e[0m \e[32m$(top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}')%\e[0m"
+    echo -e "\e[1;34m系统负载:\e[0m \e[32m$(uptime | awk -F'load average:' '{print $2}' | sed 's/ //g')\e[0m"
+    
+    # 物理内存处理
+    mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else print "数据不可用"}')
+    echo -e "\e[1;34m物理内存:\e[0m \e[32m$mem_info \e[0m"
+    
+    # 虚拟内存处理
+     swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
+     echo -e "\e[1;34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
+     
+    echo -e "\e[1;34m硬盘占用:\e[0m \e[32m$(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')\e[0m"
     echo "-------------"
 
-    echo "网络算法:     $(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')"
+    # 显示网络信息
+    echo -e "\e[1;34m总接收:\e[0m \e[32m$(ifconfig | grep 'RX bytes' | awk '{print $2/1024/1024 " MB"}' | head -n1)\e[0m"  # Changed 'packets' to 'bytes' for correct data
+    echo -e "\e[1;34m总发送:\e[0m \e[32m$(ifconfig | grep 'TX bytes' | awk '{print $2/1024/1024 " MB"}' | head -n1)\e[0m"  # Similarly changed here
     echo "-------------"
 
-    echo "运营商:       $(curl -s ipinfo.io/org)"
-    echo "IPv4地址:     $(curl -s ipv4.icanhazip.com)"
-    echo "DNS地址:      $(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs)"
-    echo "地理位置:     $(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)"
-    echo "系统时间:     $(timedatectl | grep "Local time" | awk '{print $3, $4, $5}')"
+    # 显示网络协议
+    echo -e "\e[1;34m网络算法:\e[0m \e[32m$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')\e[0m"
     echo "-------------"
 
-    echo "运行时长:     $(uptime -p | sed 's/up //')"
+    # 显示运营商和地理位置
+    echo -e "\e[1;34m运营商:\e[0m \e[32m$(curl -s ipinfo.io/org | sed 's/^ *//;s/ *$//')\e[0m"  # Trim whitespace
+    echo -e "\e[1;34mIPv4地址:\e[0m \e[32m$(curl -s ipv4.icanhazip.com)\e[0m"
+    echo -e "\e[1;34mDNS地址:\e[0m \e[32m$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs | sed 's/ /, /g')\e[0m"  # Add commas between DNS servers
+    echo -e "\e[1;34m地理位置:\e[0m \e[32m$(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)\e[0m"
+    echo -e "\e[1;34m系统时间:\e[0m \e[32m$(timedatectl | grep 'Local time' | awk '{print $3, $4, $5}')\e[0m"
+    echo "-------------"
+
+    # 显示系统运行时长
+    echo -e "\e[1;34m运行时长:\e[0m \e[32m$(uptime -p | sed 's/up //')\e[0m"
+    echo "-------------"
+
+    # 等待用户输入
+    read -n 1 -s -r -p "按任意键返回菜单..."
 }
 
 # 系统优化
@@ -88,6 +104,7 @@ calibrate_time() {
     sudo timedatectl set-timezone Asia/Shanghai
     sudo timedatectl set-ntp true
     echo "时间校准完成，当前时区为 Asia/Shanghai"
+    read -n 1 -s -r -p "按任意键返回菜单..."
 }
 
 # 系统更新
@@ -96,6 +113,7 @@ update_system() {
     sudo apt update -y && sudo apt full-upgrade -y
     sudo apt autoremove -y && sudo apt autoclean -y
     echo "系统更新完成！"
+    read -n 1 -s -r -p "按任意键返回菜单..."
 }
 
 # 系统清理
@@ -106,6 +124,7 @@ clean_system() {
     sudo journalctl --rotate && sudo journalctl --vacuum-time=10m
     sudo journalctl --vacuum-size=50M
     echo "系统清理完成！"
+    read -n 1 -s -r -p "按任意键返回菜单..."
 }
 
 # 开启 BBR
@@ -119,6 +138,7 @@ enable_bbr() {
         sudo sysctl -p
         echo "BBR 已启用。"
     fi
+    read -n 1 -s -r -p "按任意键返回菜单..."
 }
 
 # ROOT登录
