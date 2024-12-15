@@ -58,26 +58,28 @@ view_vps_info() {
 
 # 系统优化
 display_system_optimization_menu() {
-    echo "========================================="
-    echo " 系统优化 "
-    echo "========================================="
-    echo "1) 校准时间"
-    echo "2) 更新系统"
-    echo "3) 清理系统"
-    echo "4) 开启BBR"
-    echo "5) ROOT登录"
-    echo "6) 返回上级菜单"
-    echo "========================================="
-    read -p "请选择功能 [1-6]: " opt_choice
-    case "$opt_choice" in
-        1) calibrate_time ;;
-        2) update_system ;;
-        3) clean_system ;;
-        4) enable_bbr ;;
-        5) root_login ;;
-        6) return ;;
-        *) echo "无效选项，请重新输入。" ;;
-    esac
+    while true; do
+        echo "========================================="
+        echo " 系统优化 "
+        echo "========================================="
+        echo "1) 校准时间"
+        echo "2) 更新系统"
+        echo "3) 清理系统"
+        echo "4) 开启BBR"
+        echo "5) ROOT登录"
+        echo "6) 返回上级菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-6]: " opt_choice
+        case "$opt_choice" in
+            1) calibrate_time ;;
+            2) update_system ;;
+            3) clean_system ;;
+            4) enable_bbr ;;
+            5) root_login ;;  # root_login 内部已经控制返回逻辑
+            6) return ;;  # 返回上级菜单
+            *) echo "无效选项，请重新输入。" ;;
+        esac
+    done
 }
 
 # 时间校准
@@ -121,33 +123,36 @@ enable_bbr() {
 
 # ROOT登录
 root_login() {
-    echo -e "\n[ROOT登录]"
-    echo "1) 设置密码"
-    echo "2) 编辑配置：修改PermitRootLogin与PasswordAuthentication为 yes"
-    echo "3) 重启服务"
-    echo "4) 返回上级菜单"
-    read -p "请选择功能 [1-4]: " root_choice
-    case "$root_choice" in
-        1) sudo passwd root ;;
-        2) sudo nano /etc/ssh/sshd_config ;;
-        3) sudo systemctl restart sshd.service ;;
-        4) display_system_optimization_menu ;;
-        *) echo "无效选项，请重新输入。" ;;
-    esac
-    if [ "$root_choice" -ne 4 ]; then
-        root_login
-    fi
+    while true; do
+        echo "========================================="
+        echo " ROOT登录 "
+        echo "========================================="
+        echo "1) 设置密码"
+        echo "2) 编辑配置：修改PermitRootLogin与PasswordAuthentication为 yes"
+        echo "3) 重启服务"
+        echo "4) 返回上级菜单"
+        echo "========================================="        
+        read -p "请选择功能 [1-4]: " root_choice
+        case "$root_choice" in
+            1) sudo passwd root ;;
+            2) sudo nano /etc/ssh/sshd_config ;;
+            3) sudo systemctl restart sshd.service ;;
+            4) return ;;
+            *) echo "无效选项，请重新输入。" ;;
+        esac
+    done
 }
 
 # 申请证书
 apply_certificate() {
+    while true; do    
     echo "========================================="
     echo " 申请证书 "
     echo "========================================="
     echo "1) 安装脚本"
     echo "2) 申请证书"
-    echo "3) 更换服务器"
-    echo "4) 安装证书"
+    echo "3) 安装证书"
+    echo "4) 更换服务器"
     echo "5) 卸载脚本"
     echo "6) 返回主菜单"
     echo "========================================="
@@ -155,7 +160,7 @@ apply_certificate() {
     case "$cert_choice" in
         1)
             read -p "请输入邮箱地址: " email
-            curl https://get.acme.sh | sh -s email=$email
+            command -v cron >/dev/null 2>&1 || (apt update && apt install -y cron) && curl https://get.acme.sh | sh -s email=$email
             echo "acme.sh 安装完成！"
             ;;
         2)
@@ -164,16 +169,16 @@ apply_certificate() {
             echo "证书申请完成！"
             ;;
         3)
-            ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-            echo "已切换至 Let's Encrypt 服务。"
-            ;;
-        4)
-            read -p "请输入域名: " domain
-            read -p "请输入证书安装路径: " path
-            ~/.acme.sh/acme.sh --installcert -d $domain \
-                --key-file $path/private.key --fullchain-file $path/cert.crt
+            mkdir -p /path/to
+            /root/.acme.sh/acme.sh --installcert -d $domain --key-file /path/to/private.key --fullchain-file /path/to/fullchain.crt
+            sudo chmod 644 /path/to/fullchain.crt /path/to/private.key
+            sudo chown root:root /path/to/fullchain.crt /path/to/private.key
             echo "证书安装完成！"
             ;;
+        4)
+            ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+            echo "已切换至 Let's Encrypt 服务。"
+            ;;        
         5)
             ~/.acme.sh/acme.sh --uninstall
             echo "acme.sh 已卸载。"
@@ -185,51 +190,56 @@ apply_certificate() {
             echo "无效选项，请重新输入。"
             ;;
     esac
+    done    
 }
 
 # 安装 Xray
 install_xray() {
-    echo "========================================="
-    echo " 安装 Xray "
-    echo "========================================="
-    echo "1) 安装/升级"
-    echo "2) 编辑配置"
-    echo "3) 重启服务"
-    echo "4) 查看状态"
-    echo "5) 卸载服务"
-    echo "6) 返回主菜单"
-    echo "========================================="
-    read -p "请选择功能 [1-6]: " xray_choice
-    case "$xray_choice" in
-        1)
-            bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
-            echo "Xray 安装/升级完成！"
-            ;;
-        2)
-            sudo nano /usr/local/etc/xray/config.json
-            ;;
-        3)
-            sudo systemctl restart xray
-            echo "Xray 已重启。"
-            ;;
-        4)
-            sudo systemctl status xray
-            ;;
-        5)
-            bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
-            echo "Xray 已卸载。"
-            ;;
-        6)
-            return
-            ;;
-        *)
-            echo "无效选项，请重新输入。"
-            ;;
-    esac
+    while true; do
+        echo "========================================="
+        echo " 安装 Xray "
+        echo "========================================="
+        echo "1) 安装/升级"
+        echo "2) 编辑配置"
+        echo "3) 重启服务"
+        echo "4) 查看状态"
+        echo "5) 卸载服务"
+        echo "6) 返回上级菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-6]: " xray_choice
+        case "$xray_choice" in
+            1)
+                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+                sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc"
+                echo "Xray 安装/升级完成！"
+                ;;
+            2)
+                sudo nano /usr/local/etc/xray/config.json
+                ;;
+            3)
+                sudo systemctl restart xray
+                echo "Xray 已重启。"
+                ;;
+            4)
+                sudo systemctl status xray
+                ;;
+            5)
+                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
+                echo "Xray 已卸载。"
+                ;;
+            6)
+                return 
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
+        esac
+    done
 }
 
 # 安装 hysteria2
 install_hysteria2() {
+    while true; do    
     echo "========================================="
     echo " 安装 hysteria2 "
     echo "========================================="
@@ -272,10 +282,12 @@ install_hysteria2() {
             echo "无效选项，请重新输入。"
             ;;
     esac
+    done
 }
 
 # 安装 1Panel
 install_1panel() {
+    while true; do        
     echo "========================================="
     echo " 安装 1Panel "
     echo "========================================="
@@ -291,11 +303,13 @@ install_1panel() {
             echo "1Panel 安装完成！"
             ;;
         2)
-            sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
+            sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d && sudo find / -name "*1panel*" -exec rm -rf {} +
             echo "1Panel 卸载完成！"
             ;;
         3)
-            sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && sudo rm -rf /var/lib/docker /etc/docker /var/run/docker.sock && sudo groupdel docker
+            sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
+            sudo find / \( -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
+            sudo groupdel docker
             echo "Docker 已卸载。"
             ;;
         4)
@@ -305,6 +319,7 @@ install_1panel() {
             echo "无效选项，请重新输入。"
             ;;
     esac
+    done
 }
 
 # 主循环
@@ -313,7 +328,7 @@ while true; do
     read -p "请输入数字 [1-0] 选择功能: " choice
     case "$choice" in
         1) view_vps_info ;;
-        2) display_system_optimization_menu ;;
+        2) display_system_optimization_menu ;; 
         3) apply_certificate ;;
         4) install_xray ;;
         5) install_hysteria2 ;;
@@ -326,7 +341,4 @@ while true; do
             echo "无效选项，请输入数字 1-0！"
             ;;
     esac
-    if [[ "$choice" != "2" && "$choice" != "3" && "$choice" != "4" && "$choice" != "5" && "$choice" != "6" ]]; then
-        read -n 1 -s -r -p "按任意键返回主菜单..."
-    fi
 done
