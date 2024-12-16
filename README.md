@@ -1,6 +1,7 @@
 #  VPS 管理脚本
 
 ## 自用的vps常用命令脚本，适用于debian系统，目前集成以下功能：
+
 - 查看系统配置信息；
 - 系统优化：更新、清理、开启BBR及ROOT登录等；
 - 域名证书申请；
@@ -10,8 +11,11 @@
 - 其他功能陆续添加中。
 
 ## 直接使用命令
-```bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)```
+
+- ```bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)```
 
 ## 下载使用命令
-```sudo bash -c 'curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh -o /usr/local/sbin/one && chmod +x /usr/local/sbin/one && /usr/local/sbin/one'```
-```sudo rm -f /usr/local/sbin/one```
+
+- ```sudo bash -c 'curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh -o /usr/local/sbin/one && chmod +x /usr/local/sbin/one && /usr/local/sbin/one'```
+
+- ```sudo rm -f /usr/local/sbin/one```
