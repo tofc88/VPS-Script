@@ -16,6 +16,9 @@
 
 ## 下载使用命令
 
+### 下载
 - ```sudo bash -c 'curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh -o /usr/local/sbin/one && chmod +x /usr/local/sbin/one && /usr/local/sbin/one'```
-
+### 使用
+```one```
+### 卸载
 - ```sudo rm -f /usr/local/sbin/one```
