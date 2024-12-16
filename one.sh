@@ -401,24 +401,3 @@ while true; do
             ;;
     esac
 done
-
-# 下载脚本
-download_and_install_one() {
-  local url="https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh"
-  local target_dir="/usr/local/sbin"
-  local target_file="$target_dir/one"
-
-  echo "Downloading one.sh..."
-  if curl -sL "$url" -o "$target_file"; then
-    echo "Download successful."
-    chmod +x "$target_file"
-    echo "Made one executable."
-    echo "one.sh is now installed at $target_file."
-  else
-      echo "Failed to download one.sh"
-      exit 1
-  fi
-}
-if [ ! -x "/usr/local/sbin/one" ]; then
-    download_and_install_one
-fi
