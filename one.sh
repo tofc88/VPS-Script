@@ -419,9 +419,6 @@ download_and_install_one() {
       exit 1
   fi
 }
-
-
-# Check if the script is already downloaded and installed, if not, install it
 if [ ! -x "/usr/local/sbin/one" ]; then
     download_and_install_one
 fi
