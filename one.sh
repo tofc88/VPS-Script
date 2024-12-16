@@ -48,8 +48,8 @@ view_vps_info() {
     echo "-------------"
 
     # 显示网络信息
-    echo -e "\e[1;34m总接收:\e[0m \e[32m$(ifconfig | grep 'RX bytes' | awk '{print $2/1024/1024 " MB"}' | head -n1)\e[0m"  # Changed 'packets' to 'bytes' for correct data
-    echo -e "\e[1;34m总发送:\e[0m \e[32m$(ifconfig | grep 'TX bytes' | awk '{print $2/1024/1024 " MB"}' | head -n1)\e[0m"  # Similarly changed here
+echo -e "\e[1;34m总接收:\e[0m \e[32m$(ip -s link show | grep 'eth0' | awk '{print $5/1024/1024 " MB"}')\e[0m"
+echo -e "\e[1;34m总发送:\e[0m \e[32m$(ip -s link show | grep 'eth0' | awk '{print $9/1024/1024 " MB"}')\e[0m"
     echo "-------------"
 
     # 显示网络协议
@@ -83,7 +83,7 @@ display_system_optimization_menu() {
         echo "3) 清理系统"
         echo "4) 开启BBR"
         echo "5) ROOT登录"
-        echo "6) 返回上级菜单"
+        echo "6) 返回主菜单"
         echo "========================================="
         read -p "请选择功能 [1-6]: " opt_choice
         case "$opt_choice" in
@@ -145,18 +145,23 @@ enable_bbr() {
 root_login() {
     while true; do
         echo "========================================="
-        echo " ROOT登录 "
+        echo " ROOT 登录 "
         echo "========================================="
         echo "1) 设置密码"
-        echo "2) 编辑配置：修改PermitRootLogin与PasswordAuthentication为 yes"
+        echo "2) 编辑配置：修改 PermitRootLogin 与 PasswordAuthentication 为 yes"
         echo "3) 重启服务"
         echo "4) 返回上级菜单"
-        echo "========================================="        
+        echo "========================================="
         read -p "请选择功能 [1-4]: " root_choice
         case "$root_choice" in
             1) sudo passwd root ;;
             2) sudo nano /etc/ssh/sshd_config ;;
-            3) sudo systemctl restart sshd.service ;;
+            3)
+              sudo systemctl restart sshd.service
+              echo "ROOT 登录开启成功"
+              read -n 1 -s -r -p "按任意键返回菜单..."
+              return
+              ;;
             4) return ;;
             *) echo "无效选项，请重新输入。" ;;
         esac
@@ -165,51 +170,80 @@ root_login() {
 
 # 申请证书
 apply_certificate() {
-    while true; do    
-    echo "========================================="
-    echo " 申请证书 "
-    echo "========================================="
-    echo "1) 安装脚本"
-    echo "2) 申请证书"
-    echo "3) 更换服务器"
-    echo "4) 安装证书"
-    echo "5) 卸载脚本"
-    echo "6) 返回主菜单"
-    echo "========================================="
-    read -p "请选择功能 [1-6]: " cert_choice
-    case "$cert_choice" in
-        1)
-            read -p "请输入邮箱地址: " email
-            curl https://get.acme.sh | sh -s email=$email
-            echo "acme.sh 安装完成！"
-            ;;
-        2)
-            read -p "请输入域名: " domain
-            ~/.acme.sh/acme.sh --issue --standalone -d $domain
-            echo "证书申请完成！"
-            ;;
-        3)
-            ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-            echo "已切换至 Let's Encrypt 服务。"
-            ;;
-        4)
-            mkdir /path/to
-            ~/.acme.sh/acme.sh --installcert -d $domain \
+    while true; do
+        echo "========================================="
+        echo " 申请证书 "
+        echo "========================================="
+        echo "1) 安装脚本"
+        echo "2) 申请证书"
+        echo "3) 更换服务器"
+        echo "4) 安装证书"
+        echo "5) 卸载脚本"
+        echo "6) 返回主菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-6]: " cert_choice
+        case "$cert_choice" in
+            1)
+                read -p "请输入邮箱地址: " email
+                # Check if cron is installed
+                if ! command -v crontab &> /dev/null; then
+                    echo "正在检测 cron 是否安装..."
+                    # Install cron based on the OS (using a basic check)
+                    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+                        if command -v apt &> /dev/null; then
+                            sudo apt update
+                            sudo apt install -y cron
+                        elif command -v yum &> /dev/null; then
+                            sudo yum install -y cronie
+                            sudo systemctl enable crond
+                            sudo systemctl start crond
+                        elif command -v dnf &> /dev/null; then
+                             sudo dnf install -y cronie
+                             sudo systemctl enable crond
+                             sudo systemctl start crond
+                        else
+                            echo "不支持的包管理器，请手动安装 cron。"
+                            continue
+                        fi
+                    else
+                      echo "不支持的操作系统，请手动安装 cron。"
+                      continue
+                    fi
+                    echo "cron 安装完成。"
+                fi
+                
+                curl https://get.acme.sh | sh -s email="$email"
+                echo "acme.sh 安装完成！"
+                ;;
+            2)
+                read -p "请输入域名: " domain
+                ~/.acme.sh/acme.sh --issue --standalone -d "$domain"
+                 echo "证书申请完成！"
+                ;;
+            3)
+                ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+                echo "已切换至 Let's Encrypt 服务。"
+                ;;
+           4)
+                read -p "请输入域名: " domain
+                mkdir -p /path/to
+                ~/.acme.sh/acme.sh --installcert -d $domain \
                 --key-file /path/to/private.key --fullchain-file /path/to/fullchain.crt
-            echo "证书安装完成！"
-            ;;
-        5)
-            ~/.acme.sh/acme.sh --uninstall
-            echo "acme.sh 已卸载。"
-            ;;
-        6)
-            return
-            ;;
-        *)
-            echo "无效选项，请重新输入。"
-            ;;
-    esac
-    done    
+                sudo chmod 644 /path/to/fullchain.crt /path/to/private.key
+                echo "证书安装完成！"
+                ;;
+            5)
+                ~/.acme.sh/acme.sh --uninstall
+                echo "acme.sh 已卸载。"
+                ;;
+            6)
+                return
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
+        esac
+    done
 }
 
 # 安装 Xray
@@ -221,11 +255,10 @@ install_xray() {
         echo "1) 安装/升级"
         echo "2) 编辑配置"
         echo "3) 重启服务"
-        echo "4) 查看状态"
-        echo "5) 卸载服务"
-        echo "6) 返回上级菜单"
+        echo "4) 卸载服务"
+        echo "5) 返回主菜单"
         echo "========================================="
-        read -p "请选择功能 [1-6]: " xray_choice
+        read -p "请选择功能 [1-5]: " xray_choice
         case "$xray_choice" in
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
@@ -237,16 +270,13 @@ install_xray() {
                 ;;
             3)
                 sudo systemctl restart xray
-                echo "Xray 已重启。"
-                ;;
-            4)
                 sudo systemctl status xray
                 ;;
-            5)
+            4)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
                 echo "Xray 已卸载。"
                 ;;
-            6)
+            5)
                 return 
                 ;;
             *)
@@ -265,15 +295,16 @@ install_hysteria2() {
     echo "1) 安装/升级"
     echo "2) 编辑配置"
     echo "3) 重启服务"
-    echo "4) 查看状态"
-    echo "5) 开机自启"
-    echo "6) 卸载服务"
-    echo "7) 返回主菜单"
+    echo "4) 卸载服务"
+    echo "5) 返回主菜单"
     echo "========================================="
-    read -p "请选择功能 [1-7]: " hysteria_choice
+    read -p "请选择功能 [1-5]: " hysteria_choice
     case "$hysteria_choice" in
         1)
             bash <(curl -fsSL https://get.hy2.sh/)
+            sudo systemctl enable --now hysteria-server.service
+            sysctl -w net.core.rmem_max=16777216
+            sysctl -w net.core.wmem_max=16777216
             echo "hysteria2 安装/升级完成！"
             ;;
         2)
@@ -281,20 +312,13 @@ install_hysteria2() {
             ;;
         3)
             sudo systemctl restart hysteria-server.service
-            echo "hysteria2 已重启。"
-            ;;
-        4)
             sudo systemctl status hysteria-server.service
             ;;
-        5)
-            sudo systemctl enable --now hysteria-server.service
-            echo "hysteria2 已设置为开机自启。"
-            ;;
-        6)
+        4)
             bash <(curl -fsSL https://get.hy2.sh/) --remove
             echo "hysteria2 已卸载。"
             ;;
-        7)
+        5)
             return
             ;;
         *)
@@ -312,12 +336,11 @@ install_1panel() {
         echo "========================================="
         echo "1) 安装面板"
         echo "2) 安装防火墙"
-        echo "3) 卸载面板"
-        echo "4) 卸载防火墙"
-        echo "5) 卸载 Docker"
-        echo "6) 返回主菜单"
+        echo "3) 卸载防火墙"
+        echo "4) 卸载面板"
+        echo "5) 返回主菜单"
         echo "========================================="
-        read -p "请选择功能 [1-4]: " panel_choice
+        read -p "请选择功能 [1-5]: " panel_choice
         case "$panel_choice" in
             1)
                 curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
@@ -328,20 +351,17 @@ install_1panel() {
                 echo "ufw 安装完成！"
                 ;;
             3)
-                sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
-                echo "1Panel 卸载完成！"
-                ;;
-            4)
                 sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
                 echo "ufw 卸载完成！"
                 ;;
-            5)
+            4)
+                sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
                 sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
-                sudo find / \( -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
+                sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
                 sudo groupdel docker
-                echo "Docker 已卸载。"
+                echo "1Panel 卸载完成！"
                 ;;
-            6)
+            5)
                 return
                 ;;
             *)
