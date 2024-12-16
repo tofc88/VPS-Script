@@ -48,8 +48,18 @@ view_vps_info() {
     echo "-------------"
 
     # 显示网络信息
-echo -e "\e[1;34m总接收:\e[0m \e[32m$(ip -s link show | grep 'eth0' | awk '{print $5/1024/1024 " MB"}')\e[0m"
-echo -e "\e[1;34m总发送:\e[0m \e[32m$(ip -s link show | grep 'eth0' | awk '{print $9/1024/1024 " MB"}')\e[0m"
+    NET_INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
+    if [ -n "$NET_INTERFACE" ]; then
+    RX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/rx_bytes)
+    TX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/tx_bytes)
+    RX_MB=$(awk "BEGIN {printf \"%.2f\", $RX_BYTES / 1024 / 1024}")
+    TX_MB=$(awk "BEGIN {printf \"%.2f\", $TX_BYTES / 1024 / 1024}")
+    echo -e "\e[1;34m网络接口:\e[0m \e[32m$NET_INTERFACE\e[0m"
+    echo -e "\e[1;34m总接收:\e[0m \e[32m${RX_MB} MB\e[0m"
+    echo -e "\e[1;34m总发送:\e[0m \e[32m${TX_MB} MB\e[0m"
+    else
+    echo -e "\e[1;31m未检测到有效的网络接口！\e[0m"
+    fi
     echo "-------------"
 
     # 显示网络协议
