@@ -12,10 +12,9 @@
 
 ## 直接使用命令
 
-<div class="command-container">
-  <code id="command">bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)</code>
-  <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
-</div>
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)
+\```
 
 ## 下载使用命令
 
