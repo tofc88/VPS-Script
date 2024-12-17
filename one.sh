@@ -9,7 +9,7 @@
 display_main_menu() {
     clear
     echo "========================================="
-    echo "          VPS 管理脚本          "
+    echo -e "       \e[1;92mVPS管理脚本\e[0m       "
     echo "========================================="
     echo "1) 系统信息"
     echo "2) 系统优化"
@@ -83,14 +83,15 @@ view_vps_info() {
     echo "-------------"
 
     # 等待用户输入
-    read -n 1 -s -r -p "按任意键返回菜单..."
+    echo -e "\e[34m按任意键返回菜单...\e[0m"
+    read -n 1 -s -r
 }
 
 # 系统优化
 display_system_optimization_menu() {
     while true; do
         echo "========================================="
-        echo "          系统优化          "
+    echo -e "       \e[93m系统优化\e[0m       "
         echo "========================================="
         echo "1) 校准时间"
         echo "2) 更新系统"
@@ -117,8 +118,9 @@ calibrate_time() {
     echo -e "\n[校准时间]"
     sudo timedatectl set-timezone Asia/Shanghai
     sudo timedatectl set-ntp true
-    echo "时间校准完成，当前时区为 Asia/Shanghai"
-    read -n 1 -s -r -p "按任意键返回菜单..."
+    echo -e "\e[32m时间校准完成，当前时区为 Asia/Shanghai\e[0m"
+    echo -e "\e[34m按任意键返回菜单...\e[0m"
+    read -n 1 -s -r
 }
 
 # 系统更新
@@ -126,8 +128,9 @@ update_system() {
     echo -e "\n[更新系统]"
     sudo apt update -y && sudo apt full-upgrade -y
     sudo apt autoremove -y && sudo apt autoclean -y
-    echo "系统更新完成！"
-    read -n 1 -s -r -p "按任意键返回菜单..."
+    echo -e "\e[32m系统更新完成！\e[0m"
+    echo -e "\e[34m按任意键返回菜单...\e[0m"
+    read -n 1 -s -r
 }
 
 # 系统清理
@@ -137,29 +140,31 @@ clean_system() {
     sudo apt clean -y && sudo apt autoclean -y
     sudo journalctl --rotate && sudo journalctl --vacuum-time=10m
     sudo journalctl --vacuum-size=50M
-    echo "系统清理完成！"
-    read -n 1 -s -r -p "按任意键返回菜单..."
+    echo -e "\e[32m系统清理完成！\e[0m"
+    echo -e "\e[34m按任意键返回菜单...\e[0m"
+    read -n 1 -s -r
 }
 
 # 开启 BBR
 enable_bbr() {
     echo -e "\n[开启BBR]"
     if sysctl net.ipv4.tcp_congestion_control | grep -q 'bbr'; then
-        echo "BBR 已开启。"
+    echo -e "\e[32mBBR 已开启！\e[0m"
     else
         echo "net.core.default_qdisc = fq" | sudo tee -a /etc/sysctl.conf
         echo "net.ipv4.tcp_congestion_control = bbr" | sudo tee -a /etc/sysctl.conf
         sudo sysctl -p
-        echo "BBR 已启用。"
+    echo -e "\e[32mBBR 已开启！\e[0m"
     fi
-    read -n 1 -s -r -p "按任意键返回菜单..."
+    echo -e "\e[34m按任意键返回菜单...\e[0m"
+    read -n 1 -s -r
 }
 
 # ROOT登录
 root_login() {
     while true; do
         echo "========================================="
-        echo "          ROOT 登录          "
+        echo -e "       \e[93mROOT登录\e[0m       "
         echo "========================================="
         echo "1) 设置密码"
         echo "2) 编辑配置：修改 PermitRootLogin 与 PasswordAuthentication 为 yes"
@@ -172,8 +177,9 @@ root_login() {
             2) sudo nano /etc/ssh/sshd_config ;;
             3)
                 sudo systemctl restart sshd.service
-                echo "ROOT 登录开启成功"
-                read -n 1 -s -r -p "按任意键返回菜单..."
+                echo -e "\e[32mROOT 登录开启成功！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             4) return ;;
             *) echo "无效选项，请重新输入。" ;;
@@ -185,7 +191,7 @@ root_login() {
 apply_certificate() {
     while true; do
         echo "========================================="
-        echo "          申请证书          "
+        echo -e "       \e[93m申请证书\e[0m       "
         echo "========================================="
         echo "1) 安装脚本"
         echo "2) 申请证书"
@@ -225,19 +231,22 @@ apply_certificate() {
                     echo "cron 安装完成。"
                 fi
                 curl https://get.acme.sh | sh -s email="$email"
-                echo "acme.sh 安装完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32macme.sh 安装完成！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             2)
                 read -p "请输入域名: " domain
                 ~/.acme.sh/acme.sh --issue --standalone -d "$domain"
-                echo "证书申请完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32m证书申请完成！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             3)
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-                echo "已切换至 Let's Encrypt 服务。"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32m已切换至 Let's Encrypt 服务！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             4)
                 read -p "请输入域名: " domain
@@ -248,16 +257,18 @@ apply_certificate() {
     --key-file "$install_path/private.key" --fullchain-file "$install_path/fullchain.crt" && \
                 sudo chmod 644 "$install_path/fullchain.crt" "$install_path/private.key"
                 if [[ $? -eq 0 ]]; then
-                echo "证书安装完成！路径: $install_path"
+                echo -e "\e[32m证书安装完成！路径: $install_path\e[0m"
                 else
                 echo "证书安装失败，请检查输入。"
                 fi
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             5)
                 ~/.acme.sh/acme.sh --uninstall
-                echo "acme.sh 已卸载。"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32macme.sh 已卸载。\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             6)
                 return
@@ -273,7 +284,7 @@ apply_certificate() {
 install_xray() {
     while true; do
         echo "========================================="
-        echo "          安装 Xray          "
+        echo -e "       \e[93m安装 Xray\e[0m       "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置：写入UUID"
@@ -287,13 +298,16 @@ install_xray() {
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
                     sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc" && \
-                echo "Xray 安装/升级完成！以下是uuid："
-                xray uuid
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mXray 安装/升级完成！以下是uuid：\e[0m"
+                echo -e "\e[31m$(xray uuid)\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             2)
                 sudo nano /usr/local/etc/xray/config.json
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32m配置文件已修改。\e[0m"                
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             3)
                 sudo systemctl restart xray && \
@@ -349,15 +363,17 @@ install_xray() {
                 local TLS=${TLS:-"tls"}
                 local ADDRESS=${ADDRESS:-"127.0.0.1"}
                  local PORT=${PORT:-"443"} # 如果未找到端口，则默认使用 443
-                local VLESS_LINK="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
-                echo "生成的 VLESS 链接如下："
-                echo "$VLESS_LINK"
-                read -n 1 -s -r -p "按任意键返回菜单..."
+                local vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
+                echo -e "\e[32mVLESS 链接如下：\e[0m"
+                echo -e "\e[33m$vless_uri\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             5)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
-                echo "Xray 已卸载。"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mXray 已卸载。\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             6)
                 return 
@@ -373,7 +389,7 @@ install_xray() {
 install_hysteria2() {
     while true; do    
         echo "========================================="
-        echo "          安装 hysteria2          "
+        echo -e "       \e[93m安装 hysteria2\e[0m       "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置"
@@ -389,12 +405,15 @@ install_hysteria2() {
                 sudo systemctl enable --now hysteria-server.service && \
                 sysctl -w net.core.rmem_max=16777216
                 sysctl -w net.core.wmem_max=16777216
-                echo "hysteria2 安装/升级完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mhysteria2 安装/升级完成！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             2)
                 sudo nano /etc/hysteria/config.yaml
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32m配置文件已修改。\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             3)
                 sudo systemctl restart hysteria-server.service && \
@@ -437,9 +456,10 @@ install_hysteria2() {
                      fi
                 fi
                 local hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
-                echo "生成的 VLESS 链接如下："                
-                echo "$hysteria2_uri"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mhysteria2 链接如下：\e[0m"
+                echo -e "\e[33m$hysteria2_uri\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             5)
                 bash <(curl -fsSL https://get.hy2.sh/) --remove && \
@@ -448,8 +468,9 @@ install_hysteria2() {
                 rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server.service
                 rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service
                 systemctl daemon-reload                
-                echo "hysteria2 已卸载。"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mhysteria2 已卸载。\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             6)
                 return
@@ -465,7 +486,7 @@ install_hysteria2() {
 install_1panel() {
     while true; do
         echo "========================================="
-        echo "          安装 1Panel          "
+        echo -e "       \e[93m安装 1Panel\e[0m       "
         echo "========================================="
         echo "1) 安装面板"
         echo "2) 安装防火墙"
@@ -477,26 +498,30 @@ install_1panel() {
         case "$panel_choice" in
             1)
                 curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
-                echo "1Panel 安装完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32m1Panel 安装完成！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             2)
                 sudo apt install ufw
-                echo "ufw 安装完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mufw 安装完成！\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             3)
                 sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
-                echo "ufw 卸载完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32mufw 卸载完成。\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             4)
                 sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
                 sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
                     sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
                     sudo groupdel docker
-                echo "1Panel 卸载完成！"
-                read -n 1 -s -r -p "按任意键返回菜单..."                
+                echo -e "\e[32m1Panel 卸载完成。\e[0m"
+                echo -e "\e[34m按任意键返回菜单...\e[0m"
+                read -n 1 -s -r
                 ;;
             5)
                 return
@@ -523,7 +548,7 @@ while true; do
         5) install_hysteria2 ;;
         6) install_1panel ;;
         0)
-            echo "退出脚本，感谢使用！"
+            echo -e "\e[34m退出脚本，感谢使用！\e[0m"
             exit 0
             ;;
         *)
