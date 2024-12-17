@@ -5,7 +5,7 @@
 display_main_menu() {
     clear
     echo "========================================="
-    echo " VPS 管理脚本 "
+    echo "          VPS 管理脚本          "
     echo "========================================="
     echo "1) 系统信息"
     echo "2) 系统优化"
@@ -29,7 +29,7 @@ view_vps_info() {
     echo -e "\e[1;34mCPU架构:\e[0m \e[32m$(uname -m)\e[0m"
     echo -e "\e[1;34mCPU型号:\e[0m \e[32m$(lscpu | grep 'Model name' | sed 's/Model name:[ \t]*//')\e[0m"
     echo -e "\e[1;34mCPU核心数:\e[0m \e[32m$(nproc)\e[0m"
-    echo -e "\e[1;34mCPU频率:\e[0m \e[32m$(lscpu | grep 'CPU MHz' | awk -F: '{print $2}' | xargs) MHz\e[0m"  # Add xargs to remove leading/trailing whitespace
+    echo -e "\e[1;34mCPU频率:\e[0m \e[32m$(lscpu | grep 'CPU MHz' | awk -F: '{print $2}' | xargs) MHz\e[0m"
     echo "-------------"
 
     # 显示系统资源信息
@@ -41,8 +41,8 @@ view_vps_info() {
     echo -e "\e[1;34m物理内存:\e[0m \e[32m$mem_info \e[0m"
     
     # 虚拟内存处理
-     swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
-     echo -e "\e[1;34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
+    swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
+    echo -e "\e[1;34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
      
     echo -e "\e[1;34m硬盘占用:\e[0m \e[32m$(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')\e[0m"
     echo "-------------"
@@ -50,15 +50,15 @@ view_vps_info() {
     # 显示网络信息
     NET_INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
     if [ -n "$NET_INTERFACE" ]; then
-    RX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/rx_bytes)
-    TX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/tx_bytes)
-    RX_MB=$(awk "BEGIN {printf \"%.2f\", $RX_BYTES / 1024 / 1024}")
-    TX_MB=$(awk "BEGIN {printf \"%.2f\", $TX_BYTES / 1024 / 1024}")
-    echo -e "\e[1;34m网络接口:\e[0m \e[32m$NET_INTERFACE\e[0m"
-    echo -e "\e[1;34m总接收:\e[0m \e[32m${RX_MB} MB\e[0m"
-    echo -e "\e[1;34m总发送:\e[0m \e[32m${TX_MB} MB\e[0m"
+        RX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/rx_bytes)
+        TX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/tx_bytes)
+        RX_MB=$(awk "BEGIN {printf \"%.2f\", $RX_BYTES / 1024 / 1024}")
+        TX_MB=$(awk "BEGIN {printf \"%.2f\", $TX_BYTES / 1024 / 1024}")
+        echo -e "\e[1;34m网络接口:\e[0m \e[32m$NET_INTERFACE\e[0m"
+        echo -e "\e[1;34m总接收:\e[0m \e[32m${RX_MB} MB\e[0m"
+        echo -e "\e[1;34m总发送:\e[0m \e[32m${TX_MB} MB\e[0m"
     else
-    echo -e "\e[1;31m未检测到有效的网络接口！\e[0m"
+        echo -e "\e[1;31m未检测到有效的网络接口！\e[0m"
     fi
     echo "-------------"
 
@@ -67,9 +67,9 @@ view_vps_info() {
     echo "-------------"
 
     # 显示运营商和地理位置
-    echo -e "\e[1;34m运营商:\e[0m \e[32m$(curl -s ipinfo.io/org | sed 's/^ *//;s/ *$//')\e[0m"  # Trim whitespace
+    echo -e "\e[1;34m运营商:\e[0m \e[32m$(curl -s ipinfo.io/org | sed 's/^ *//;s/ *$//')\e[0m"
     echo -e "\e[1;34mIPv4地址:\e[0m \e[32m$(curl -s ipv4.icanhazip.com)\e[0m"
-    echo -e "\e[1;34mDNS地址:\e[0m \e[32m$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs | sed 's/ /, /g')\e[0m"  # Add commas between DNS servers
+    echo -e "\e[1;34mDNS地址:\e[0m \e[32m$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs | sed 's/ /, /g')\e[0m"
     echo -e "\e[1;34m地理位置:\e[0m \e[32m$(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)\e[0m"
     echo -e "\e[1;34m系统时间:\e[0m \e[32m$(timedatectl | grep 'Local time' | awk '{print $3, $4, $5}')\e[0m"
     echo "-------------"
@@ -86,7 +86,7 @@ view_vps_info() {
 display_system_optimization_menu() {
     while true; do
         echo "========================================="
-        echo " 系统优化 "
+        echo "          系统优化          "
         echo "========================================="
         echo "1) 校准时间"
         echo "2) 更新系统"
@@ -155,7 +155,7 @@ enable_bbr() {
 root_login() {
     while true; do
         echo "========================================="
-        echo " ROOT 登录 "
+        echo "          ROOT 登录          "
         echo "========================================="
         echo "1) 设置密码"
         echo "2) 编辑配置：修改 PermitRootLogin 与 PasswordAuthentication 为 yes"
@@ -182,7 +182,7 @@ root_login() {
 apply_certificate() {
     while true; do
         echo "========================================="
-        echo " 申请证书 "
+        echo "          申请证书          "
         echo "========================================="
         echo "1) 安装脚本"
         echo "2) 申请证书"
@@ -228,17 +228,17 @@ apply_certificate() {
             2)
                 read -p "请输入域名: " domain
                 ~/.acme.sh/acme.sh --issue --standalone -d "$domain"
-                 echo "证书申请完成！"
+                echo "证书申请完成！"
                 ;;
             3)
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
                 echo "已切换至 Let's Encrypt 服务。"
                 ;;
-           4)
+            4)
                 read -p "请输入域名: " domain
-                mkdir -p /path/to
+                mkdir -p /path/to && \
                 ~/.acme.sh/acme.sh --installcert -d $domain \
-                --key-file /path/to/private.key --fullchain-file /path/to/fullchain.crt
+                    --key-file /path/to/private.key --fullchain-file /path/to/fullchain.crt && \
                 sudo chmod 644 /path/to/fullchain.crt /path/to/private.key
                 echo "证书安装完成！"
                 ;;
@@ -260,10 +260,10 @@ apply_certificate() {
 install_xray() {
     while true; do
         echo "========================================="
-        echo " 安装 Xray "
+        echo "          安装 Xray          "
         echo "========================================="
         echo "1) 安装/升级"
-        echo "2) 编辑配置"
+        echo "2) 编辑配置：写入UUID"
         echo "3) 重启服务"
         echo "4) 卸载服务"
         echo "5) 返回主菜单"
@@ -272,14 +272,15 @@ install_xray() {
         case "$xray_choice" in
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
-                sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc"
-                echo "Xray 安装/升级完成！"
+                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc" && \
+                echo "Xray 安装/升级完成！以下是uuid："
+                xray uuid
                 ;;
             2)
                 sudo nano /usr/local/etc/xray/config.json
                 ;;
             3)
-                sudo systemctl restart xray
+                sudo systemctl restart xray && \
                 sudo systemctl status xray
                 ;;
             4)
@@ -299,42 +300,47 @@ install_xray() {
 # 安装 hysteria2
 install_hysteria2() {
     while true; do    
-    echo "========================================="
-    echo " 安装 hysteria2 "
-    echo "========================================="
-    echo "1) 安装/升级"
-    echo "2) 编辑配置"
-    echo "3) 重启服务"
-    echo "4) 卸载服务"
-    echo "5) 返回主菜单"
-    echo "========================================="
-    read -p "请选择功能 [1-5]: " hysteria_choice
-    case "$hysteria_choice" in
-        1)
-            bash <(curl -fsSL https://get.hy2.sh/)
-            sudo systemctl enable --now hysteria-server.service
-            sysctl -w net.core.rmem_max=16777216
-            sysctl -w net.core.wmem_max=16777216
-            echo "hysteria2 安装/升级完成！"
-            ;;
-        2)
-            sudo nano /etc/hysteria/config.yaml
-            ;;
-        3)
-            sudo systemctl restart hysteria-server.service
-            sudo systemctl status hysteria-server.service
-            ;;
-        4)
-            bash <(curl -fsSL https://get.hy2.sh/) --remove
-            echo "hysteria2 已卸载。"
-            ;;
-        5)
-            return
-            ;;
-        *)
-            echo "无效选项，请重新输入。"
-            ;;
-    esac
+        echo "========================================="
+        echo "          安装 hysteria2          "
+        echo "========================================="
+        echo "1) 安装/升级"
+        echo "2) 编辑配置"
+        echo "3) 重启服务"
+        echo "4) 卸载服务"
+        echo "5) 返回主菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-5]: " hysteria_choice
+        case "$hysteria_choice" in
+            1)
+                bash <(curl -fsSL https://get.hy2.sh/) && \
+                sudo systemctl enable --now hysteria-server.service && \
+                sysctl -w net.core.rmem_max=16777216
+                sysctl -w net.core.wmem_max=16777216
+                echo "hysteria2 安装/升级完成！"
+                ;;
+            2)
+                sudo nano /etc/hysteria/config.yaml
+                ;;
+            3)
+                sudo systemctl restart hysteria-server.service && \
+                sudo systemctl status hysteria-server.service
+                ;;
+            4)
+                bash <(curl -fsSL https://get.hy2.sh/) --remove && \
+                rm -rf /etc/hysteria
+                userdel -r hysteria
+                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server.service
+                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service
+                systemctl daemon-reload                
+                echo "hysteria2 已卸载。"
+                ;;
+            5)
+                return
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
+        esac
     done
 }
 
@@ -342,7 +348,7 @@ install_hysteria2() {
 install_1panel() {
     while true; do
         echo "========================================="
-        echo " 安装 1Panel "
+        echo "          安装 1Panel          "
         echo "========================================="
         echo "1) 安装面板"
         echo "2) 安装防火墙"
@@ -367,8 +373,8 @@ install_1panel() {
             4)
                 sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
                 sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
-                sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
-                sudo groupdel docker
+                    sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
+                    sudo groupdel docker
                 echo "1Panel 卸载完成！"
                 ;;
             5)
@@ -377,7 +383,7 @@ install_1panel() {
             *)
                 echo "无效选项，请重新输入。"
                 ;;
-    esac
+        esac
     done    
 }
 
