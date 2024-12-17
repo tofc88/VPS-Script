@@ -170,7 +170,6 @@ root_login() {
               sudo systemctl restart sshd.service
               echo "ROOT 登录开启成功"
               read -n 1 -s -r -p "按任意键返回菜单..."
-              return
               ;;
             4) return ;;
             *) echo "无效选项，请重新输入。" ;;
@@ -265,10 +264,11 @@ install_xray() {
         echo "1) 安装/升级"
         echo "2) 编辑配置：写入UUID"
         echo "3) 重启服务"
-        echo "4) 卸载服务"
-        echo "5) 返回主菜单"
+        echo "4) 生成链接"
+        echo "5) 卸载服务"
+        echo "6) 返回主菜单"
         echo "========================================="
-        read -p "请选择功能 [1-5]: " xray_choice
+        read -p "请选择功能 [1-6]: " xray_choice
         case "$xray_choice" in
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
@@ -284,10 +284,49 @@ install_xray() {
                 sudo systemctl status xray
                 ;;
             4)
+                CONFIG_PATH="/usr/local/etc/xray/config.json"
+                extract_field() {
+                    local field=$1
+                    grep -Po "\"$field\":\s*\"[^\"]*\"" $CONFIG_PATH | head -n 1 | sed -E "s/\"$field\":\s*\"([^\"]*)\"/\1/"
+}
+                extract_nested_field() {
+                    local parent=$1
+                    local child=$2
+                    grep -Po "\"$parent\":\s*{[^}]*}" $CONFIG_PATH | grep -Po "\"$child\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$child\":\s*\"([^\"]*)\"/\1/"
+}
+                get_public_ip() {
+                    curl -s https://api.ipify.org || echo "127.0.0.1" # 自动获取公网 IP
+}
+                get_domain_from_cert() {
+                    local cert_file=$1
+                    local domain=$(openssl x509 -in "$cert_file" -text -noout | grep -Po "DNS:[^,]*" | head -n 1 | sed 's/DNS://')
+                    if [[ -z "$domain" ]]; then
+                    domain=$(openssl x509 -in "$cert_file" -text -noout | grep -Po "CN=[^ ]*" | sed 's/CN=//')
+                    fi
+                    echo "$domain"
+}
+                UUID=$(extract_field "id")
+                PORT=$(grep -Po '"port":\s*[0-9]+' $CONFIG_PATH | head -n 1 | sed -E "s/\"port\":\s*([0-9]+)/\1/")
+                WS_PATH=$(grep -Po '"path":\s*"[^\"]+"' $CONFIG_PATH | head -n 1 | sed -E "s/\"path\":\s*\"([^\"]*)\"/\1/")
+                TLS=$(grep -Po '"security":\s*"[^\"]+"' $CONFIG_PATH | head -n 1 | sed -E "s/\"security\":\s*\"([^\"]*)\"/\1/")
+                CERT_PATH="/path/to/fullchain.crt"  # 证书路径
+                DOMAIN=$(get_domain_from_cert "$CERT_PATH")
+                SNI=${DOMAIN:-"your.domain.net"}   # 如果没有从证书中提取到域名，使用默认值
+                HOST=${DOMAIN:-"your.domain.net"}  # 如果没有从证书中提取到域名，使用默认值
+                ADDRESS=$(get_public_ip)           # 自动获取公网 IP
+                WS_PATH=${WS_PATH:-"/"}
+                TLS=${TLS:-"tls"}
+                ADDRESS=${ADDRESS:-"127.0.0.1"}
+                VLESS_LINK="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}"#Xray
+                echo "生成的 VLESS 链接如下："
+                echo $VLESS_LINK
+                read -n 1 -s -r -p "按任意键返回菜单..."
+                ;;
+            5)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
                 echo "Xray 已卸载。"
                 ;;
-            5)
+            6)
                 return 
                 ;;
             *)
