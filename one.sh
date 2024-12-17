@@ -1,6 +1,10 @@
 #!/bin/bash
 # VPS 管理脚本
 
+# -----------------------------------------------------------------------------
+# 函数定义
+# -----------------------------------------------------------------------------
+
 # 主菜单函数
 display_main_menu() {
     clear
@@ -37,23 +41,23 @@ view_vps_info() {
     echo -e "\e[1;34m系统负载:\e[0m \e[32m$(uptime | awk -F'load average:' '{print $2}' | sed 's/ //g')\e[0m"
     
     # 物理内存处理
-    mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else print "数据不可用"}')
+    local mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else print "数据不可用"}')
     echo -e "\e[1;34m物理内存:\e[0m \e[32m$mem_info \e[0m"
     
     # 虚拟内存处理
-    swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
+    local swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
     echo -e "\e[1;34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
      
     echo -e "\e[1;34m硬盘占用:\e[0m \e[32m$(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')\e[0m"
     echo "-------------"
 
     # 显示网络信息
-    NET_INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
+    local NET_INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
     if [ -n "$NET_INTERFACE" ]; then
-        RX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/rx_bytes)
-        TX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/tx_bytes)
-        RX_MB=$(awk "BEGIN {printf \"%.2f\", $RX_BYTES / 1024 / 1024}")
-        TX_MB=$(awk "BEGIN {printf \"%.2f\", $TX_BYTES / 1024 / 1024}")
+        local RX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/rx_bytes)
+        local TX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/tx_bytes)
+        local RX_MB=$(awk "BEGIN {printf \"%.2f\", $RX_BYTES / 1024 / 1024}")
+        local TX_MB=$(awk "BEGIN {printf \"%.2f\", $TX_BYTES / 1024 / 1024}")
         echo -e "\e[1;34m网络接口:\e[0m \e[32m$NET_INTERFACE\e[0m"
         echo -e "\e[1;34m总接收:\e[0m \e[32m${RX_MB} MB\e[0m"
         echo -e "\e[1;34m总发送:\e[0m \e[32m${TX_MB} MB\e[0m"
@@ -167,10 +171,10 @@ root_login() {
             1) sudo passwd root ;;
             2) sudo nano /etc/ssh/sshd_config ;;
             3)
-              sudo systemctl restart sshd.service
-              echo "ROOT 登录开启成功"
-              read -n 1 -s -r -p "按任意键返回菜单..."
-              ;;
+                sudo systemctl restart sshd.service
+                echo "ROOT 登录开启成功"
+                read -n 1 -s -r -p "按任意键返回菜单..."
+                ;;
             4) return ;;
             *) echo "无效选项，请重新输入。" ;;
         esac
@@ -220,18 +224,20 @@ apply_certificate() {
                     fi
                     echo "cron 安装完成。"
                 fi
-                
                 curl https://get.acme.sh | sh -s email="$email"
                 echo "acme.sh 安装完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             2)
                 read -p "请输入域名: " domain
                 ~/.acme.sh/acme.sh --issue --standalone -d "$domain"
                 echo "证书申请完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             3)
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
                 echo "已切换至 Let's Encrypt 服务。"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             4)
                 read -p "请输入域名: " domain
@@ -246,10 +252,12 @@ apply_certificate() {
                 else
                 echo "证书安装失败，请检查输入。"
                 fi
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             5)
                 ~/.acme.sh/acme.sh --uninstall
                 echo "acme.sh 已卸载。"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             6)
                 return
@@ -281,39 +289,41 @@ install_xray() {
                     sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc" && \
                 echo "Xray 安装/升级完成！以下是uuid："
                 xray uuid
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             2)
                 sudo nano /usr/local/etc/xray/config.json
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             3)
                 sudo systemctl restart xray && \
                 sudo systemctl status xray
                 ;;
             4)
-                CONFIG_PATH="/usr/local/etc/xray/config.json"
+                 local CONFIG_PATH="/usr/local/etc/xray/config.json"
                 extract_field() {
                     local field=$1
                     grep -aPo "\"$field\":\s*\"[^\"]*\"" "$CONFIG_PATH" | head -n 1 | sed -E "s/\"$field\":\s*\"([^\"]*)\"/\1/"
-}
+                }
                 extract_nested_field() {
                     local parent=$1
                     local child=$2
                     grep -aPo "\"$parent\":\s*{[^}]*}" "$CONFIG_PATH" | grep -aPo "\"$child\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$child\":\s*\"([^\"]*)\"/\1/"
-}
-                extract_list_field() {
+                }
+                 extract_list_field() {
                     local list_parent=$1
                     local list_field=$2
                     grep -aPoz "\"$list_parent\":\s*\[\s*\{[^}]*\}\s*\]" "$CONFIG_PATH" | grep -aPo "\"$list_field\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$list_field\":\s*\"([^\"]*)\"/\1/"
-}
+                }
                 extract_port() {
                     grep -aPo '"port":\s*\d+' "$CONFIG_PATH" | head -n 1 | sed -E "s/\"port\":\s*([0-9]+)/\1/"
-}
+                }
                 extract_ws_path() {
                     grep -aPoz '"wsSettings":\s*{[^}]*}' "$CONFIG_PATH" | grep -aPo '"path":\s*"[^\"]*"' | head -n 1 | sed -E 's/"path":\s*"([^"]*)"/\1/'
-}
+                }
                 get_public_ip() {
                     curl -s https://api.ipify.org || echo "127.0.0.1"
-}
+                }
                 get_domain_from_cert() {
                     local cert_file=$1
                     local domain=$(openssl x509 -in "$cert_file" -text -noout | grep -aPo "DNS:[^,]*" | head -n 1 | sed 's/DNS://')
@@ -321,25 +331,25 @@ install_xray() {
                     domain=$(openssl x509 -in "$cert_file" -text -noout | grep -aPo "CN=[^ ]*" | sed 's/CN=//')
                     fi
                     echo "$domain"
-}
-                UUID=$(extract_list_field "clients" "id")
-                PORT=$(extract_port)
-                WS_PATH=$(extract_ws_path)
-                TLS=$(extract_field "security")
-                CERT_PATH=$(extract_list_field "certificates" "certificateFile")
+                }
+                local UUID=$(extract_list_field "clients" "id")
+                local PORT=$(extract_port)
+                local WS_PATH=$(extract_ws_path)
+                local TLS=$(extract_field "security")
+                local CERT_PATH=$(extract_list_field "certificates" "certificateFile")
                 if [[ -z "$CERT_PATH" ]]; then
-                echo "Error: CERT_PATH not found in config.json"
-                exit 1
+                    echo "Error: CERT_PATH not found in config.json"
+                    exit 1
                 fi
-                DOMAIN=$(get_domain_from_cert "$CERT_PATH")
-                SNI=${DOMAIN:-"your.domain.net"}   # 如果没有从证书中提取到域名，使用默认值
-                HOST=${DOMAIN:-"your.domain.net"}  # 如果没有从证书中提取到域名，使用默认值
-                ADDRESS=$(get_public_ip)
-                WS_PATH=${WS_PATH:-"/"} # 如果未找到路径，则默认 "/"
-                TLS=${TLS:-"tls"}
-                ADDRESS=${ADDRESS:-"127.0.0.1"}
-                PORT=${PORT:-"443"} # 如果未找到端口，则默认使用 443
-                VLESS_LINK="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
+                local DOMAIN=$(get_domain_from_cert "$CERT_PATH")
+                local SNI=${DOMAIN:-"your.domain.net"}   # 如果没有从证书中提取到域名，使用默认值
+                local HOST=${DOMAIN:-"your.domain.net"}  # 如果没有从证书中提取到域名，使用默认值
+                local ADDRESS=$(get_public_ip)
+                local WS_PATH=${WS_PATH:-"/"} # 如果未找到路径，则默认 "/"
+                local TLS=${TLS:-"tls"}
+                local ADDRESS=${ADDRESS:-"127.0.0.1"}
+                 local PORT=${PORT:-"443"} # 如果未找到端口，则默认使用 443
+                local VLESS_LINK="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
                 echo "生成的 VLESS 链接如下："
                 echo "$VLESS_LINK"
                 read -n 1 -s -r -p "按任意键返回菜单..."
@@ -347,6 +357,7 @@ install_xray() {
             5)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
                 echo "Xray 已卸载。"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             6)
                 return 
@@ -379,16 +390,18 @@ install_hysteria2() {
                 sysctl -w net.core.rmem_max=16777216
                 sysctl -w net.core.wmem_max=16777216
                 echo "hysteria2 安装/升级完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             2)
                 sudo nano /etc/hysteria/config.yaml
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             3)
                 sudo systemctl restart hysteria-server.service && \
                 sudo systemctl status hysteria-server.service
                 ;;
             4)
-                config_file="/etc/hysteria/config.yaml"
+                local config_file="/etc/hysteria/config.yaml"
                 get_domain_from_cert() {
                     local cert_file=$1
                     local domain=$(openssl x509 -in "$cert_file" -text -noout | grep -Po "DNS:[^,]*" | head -n 1 | sed 's/DNS://')
@@ -396,34 +409,34 @@ install_hysteria2() {
                     domain=$(openssl x509 -in "$cert_file" -text -noout | grep -Po "CN=[^ ]*" | sed 's/CN=//')
                     fi
                     echo "$domain"
-}
+                }
                 if [ ! -f "$config_file" ]; then
-                echo "Error: Config file not found at $config_file"
-                exit 1
+                    echo "Error: Config file not found at $config_file"
+                    exit 1
                 fi
-                port=$(grep "^listen:" "$config_file" | awk -F: '{print $3}')
+                local port=$(grep "^listen:" "$config_file" | awk -F: '{print $3}')
                 if [ -z "$port" ]; then
-                port="443"
+                    port="443"
                 fi
-                password=$(grep "^  password:" "$config_file" | awk '{print $2}')
-                domain=$(grep "domains:" "$config_file" -A 1 | tail -n 1 | tr -d " -")
+                local password=$(grep "^  password:" "$config_file" | awk '{print $2}')
+                local domain=$(grep "domains:" "$config_file" -A 1 | tail -n 1 | tr -d " -")
                 if [ -z "$domain" ]; then
-                cert_path=$(grep "cert:" "$config_file" | awk '{print $2}' | sed 's/"//g')
-                if [ -z "$cert_path" ]; then
-                echo "Error: No domain or certificate path found in config.yaml"
-                exit 1
+                    local cert_path=$(grep "cert:" "$config_file" | awk '{print $2}' | sed 's/"//g')
+                    if [ -z "$cert_path" ]; then
+                        echo "Error: No domain or certificate path found in config.yaml"
+                        exit 1
+                    fi
+                    if [ ! -f "$cert_path" ]; then
+                        echo "Error: Certificate file not found at $cert_path"
+                        exit 1
+                    fi
+                    domain=$(get_domain_from_cert "$cert_path")
+                     if [ -z "$domain" ]; then
+                    echo "Error: Failed to extract domain from certificate"
+                    exit 1
+                     fi
                 fi
-                if [ ! -f "$cert_path" ]; then
-                echo "Error: Certificate file not found at $cert_path"
-                exit 1
-                fi
-                domain=$(get_domain_from_cert "$cert_path")
-                if [ -z "$domain" ]; then
-                echo "Error: Failed to extract domain from certificate"
-                exit 1
-                fi
-                fi
-                hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
+                local hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
                 echo "生成的 VLESS 链接如下："                
                 echo "$hysteria2_uri"
                 read -n 1 -s -r -p "按任意键返回菜单..."                
@@ -436,6 +449,7 @@ install_hysteria2() {
                 rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service
                 systemctl daemon-reload                
                 echo "hysteria2 已卸载。"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             6)
                 return
@@ -464,14 +478,17 @@ install_1panel() {
             1)
                 curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
                 echo "1Panel 安装完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             2)
                 sudo apt install ufw
                 echo "ufw 安装完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             3)
                 sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
                 echo "ufw 卸载完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             4)
                 sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
@@ -479,6 +496,7 @@ install_1panel() {
                     sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
                     sudo groupdel docker
                 echo "1Panel 卸载完成！"
+                read -n 1 -s -r -p "按任意键返回菜单..."                
                 ;;
             5)
                 return
@@ -490,7 +508,10 @@ install_1panel() {
     done    
 }
 
+# -----------------------------------------------------------------------------
 # 主脚本循环
+# -----------------------------------------------------------------------------
+
 while true; do
     display_main_menu
     read -p "请输入数字 [1-0] 选择功能: " choice
