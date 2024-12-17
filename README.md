@@ -12,7 +12,10 @@
 
 ## 直接使用命令
 
-- ```bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)```
+<div>
+  <input id="git-command" type="text" value="bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)" readonly />
+  <button id="copy-btn">Copy</button>
+</div>
 
 ## 下载使用命令
 
