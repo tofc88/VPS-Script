@@ -12,9 +12,9 @@
 
 ## 直接使用命令
 
-<div>
-  <input id="git-command" type="text" value="bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)" readonly />
-  <button id="copy-btn">Copy</button>
+<div class="command-container">
+  <code id="command">bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)</code>
+  <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
 </div>
 
 ## 下载使用命令
