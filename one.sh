@@ -98,8 +98,9 @@ calibrate_time() {
     echo -e "\n[校准时间]"
     sudo timedatectl set-timezone Asia/Shanghai
     sudo timedatectl set-ntp true
-    echo -e "\e[32m时间校准完成，当前时区为 Asia/Shanghai\e[0m"
+    echo -e "\e[32m时间校准完成，当前时区为 Asia/Shanghai。\e[0m"
     read -n 1 -s -r -p "按任意键返回..."
+    echo
 }
 
 # 系统更新
@@ -109,6 +110,7 @@ update_system() {
     sudo apt autoremove -y && sudo apt autoclean -y
     echo -e "\e[32m系统更新完成！\e[0m"
     read -n 1 -s -r -p "按任意键返回..."
+    echo
 }
 
 # 系统清理
@@ -120,6 +122,7 @@ clean_system() {
     sudo journalctl --vacuum-size=50M
     echo -e "\e[32m系统清理完成！\e[0m"
     read -n 1 -s -r -p "按任意键返回..."
+    echo
 }
 
 # 开启 BBR
@@ -134,6 +137,7 @@ enable_bbr() {
     echo -e "\e[32mBBR已开启！\e[0m"
     fi
     read -n 1 -s -r -p "按任意键返回..."
+    echo
 }
 
 # ROOT登录
@@ -210,17 +214,20 @@ apply_certificate() {
                 curl https://get.acme.sh | sh -s email="$email"
                 echo -e "\e[32macme.sh 安装完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             2)
                 read -p "请输入域名: " domain
                 ~/.acme.sh/acme.sh --issue --standalone -d "$domain"
                 echo -e "\e[32m证书申请完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             3)
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
                 echo -e "\e[32m已切换至Let's Encrypt服务！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             4)
                 read -p "请输入域名: " domain
@@ -236,11 +243,13 @@ apply_certificate() {
                 echo "证书安装失败，请检查输入。"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             5)
                 ~/.acme.sh/acme.sh --uninstall
                 echo -e "\e[32macme.sh已卸载。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             0)
                 return
@@ -273,10 +282,12 @@ install_xray() {
                 echo -e "\e[32mXray 安装/升级完成！以下是uuid：\e[0m"
                 echo -e "\e[31m$(xray uuid)\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             2)
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             3)
                 sudo systemctl restart xray && \
@@ -322,11 +333,13 @@ install_xray() {
                 echo -e "\e[32mVLESS链接如下：\e[0m"
                 echo -e "\e[93m$vless_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             5)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
                 echo -e "\e[32mXray已卸载。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             0)
                 return 
@@ -360,10 +373,12 @@ install_hysteria2() {
                 sysctl -w net.core.wmem_max=16777216
                 echo -e "\e[32mhysteria2 安装/升级完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             2)
                 sudo nano /etc/hysteria/config.yaml
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             3)
                 sudo systemctl restart hysteria-server.service && \
@@ -399,6 +414,7 @@ install_hysteria2() {
                 echo -e "\e[32mhysteria2 链接如下：\e[0m"
                 echo -e "\e[93m$hysteria2_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             5)
                 bash <(curl -fsSL https://get.hy2.sh/) --remove && \
@@ -409,6 +425,7 @@ install_hysteria2() {
                 systemctl daemon-reload                
                 echo -e "\e[32mhysteria2 已卸载。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             0)
                 return
@@ -438,16 +455,19 @@ install_1panel() {
                 curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
                 echo -e "\e[32m1Panel安装完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             2)
                 sudo apt install ufw
                 echo -e "\e[32mufw安装完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             3)
                 sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
                 echo -e "\e[32mufw卸载完成。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             4)
                 sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
@@ -456,6 +476,7 @@ install_1panel() {
                     sudo groupdel docker
                 echo -e "\e[32m1Panel卸载完成。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             0)
                 return
