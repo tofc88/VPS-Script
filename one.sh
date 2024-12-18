@@ -283,58 +283,44 @@ install_xray() {
                 sudo systemctl status xray
                 ;;
             4)
-                 local CONFIG_PATH="/usr/local/etc/xray/config.json"
+                CONFIG_PATH="/usr/local/etc/xray/config.json"
                 extract_field() {
-                    local field=$1
-                    grep -aPo "\"$field\":\s*\"[^\"]*\"" "$CONFIG_PATH" | head -n 1 | sed -E "s/\"$field\":\s*\"([^\"]*)\"/\1/"
-                }
-                extract_nested_field() {
-                    local parent=$1
-                    local child=$2
-                    grep -aPo "\"$parent\":\s*{[^}]*}" "$CONFIG_PATH" | grep -aPo "\"$child\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$child\":\s*\"([^\"]*)\"/\1/"
-                }
-                 extract_list_field() {
+                    local pattern=$1
+                    local match=$2
+                    grep -aPo "\"$pattern\":\s*$match" "$CONFIG_PATH" | head -n 1 | sed -E "s/\"$pattern\":\s*//;s/^\"//;s/\"$//"
+}
+                extract_list_field() {
                     local list_parent=$1
                     local list_field=$2
                     grep -aPoz "\"$list_parent\":\s*\[\s*\{[^}]*\}\s*\]" "$CONFIG_PATH" | grep -aPo "\"$list_field\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$list_field\":\s*\"([^\"]*)\"/\1/"
-                }
-                extract_port() {
-                    grep -aPo '"port":\s*\d+' "$CONFIG_PATH" | head -n 1 | sed -E "s/\"port\":\s*([0-9]+)/\1/"
-                }
-                extract_ws_path() {
-                    grep -aPoz '"wsSettings":\s*{[^}]*}' "$CONFIG_PATH" | grep -aPo '"path":\s*"[^\"]*"' | head -n 1 | sed -E 's/"path":\s*"([^"]*)"/\1/'
-                }
-                get_public_ip() {
-                    curl -s https://api.ipify.org || echo "127.0.0.1"
-                }
+}
                 get_domain_from_cert() {
                     local cert_file=$1
-                    local domain=$(openssl x509 -in "$cert_file" -text -noout | grep -aPo "DNS:[^,]*" | head -n 1 | sed 's/DNS://')
-                    if [[ -z "$domain" ]]; then
-                    domain=$(openssl x509 -in "$cert_file" -text -noout | grep -aPo "CN=[^ ]*" | sed 's/CN=//')
-                    fi
-                    echo "$domain"
-                }
-                local UUID=$(extract_list_field "clients" "id")
-                local PORT=$(extract_port)
-                local WS_PATH=$(extract_ws_path)
-                local TLS=$(extract_field "security")
-                local CERT_PATH=$(extract_list_field "certificates" "certificateFile")
+                    openssl x509 -in "$cert_file" -text -noout | grep -aPo "DNS:[^,]*" | sed 's/DNS://' | head -n 1 ||
+                    openssl x509 -in "$cert_file" -text -noout | grep -aPo "CN=[^ ]*" | sed 's/CN=//'
+}
+                get_public_ip() {
+                    curl -s https://api.ipify.org || echo "127.0.0.1"
+}
+                UUID=$(extract_list_field "clients" "id")
+                PORT=$(extract_field "port" "\d+")
+                WS_PATH=$(extract_field "path" "\"[^\"]*\"")
+                TLS=$(extract_field "security" "\"[^\"]*\"")
+                CERT_PATH=$(extract_list_field "certificates" "certificateFile")
                 if [[ -z "$CERT_PATH" ]]; then
                     echo "Error: CERT_PATH not found in config.json"
                     exit 1
                 fi
-                local DOMAIN=$(get_domain_from_cert "$CERT_PATH")
-                local SNI=${DOMAIN:-"your.domain.net"} 
-                local HOST=${DOMAIN:-"your.domain.net"} 
-                local ADDRESS=$(get_public_ip)
-                local WS_PATH=${WS_PATH:-"/"} 
-                local TLS=${TLS:-"tls"}
-                local ADDRESS=${ADDRESS:-"127.0.0.1"}
-                 local PORT=${PORT:-"443"} 
-                local vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
+                DOMAIN=$(get_domain_from_cert "$CERT_PATH")
+                SNI=${DOMAIN:-"your.domain.net"}
+                HOST=${DOMAIN:-"your.domain.net"}
+                ADDRESS=$(get_public_ip)
+                WS_PATH=${WS_PATH:-"/"}
+                TLS=${TLS:-"tls"}
+                PORT=${PORT:-"443"}
+                vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
                 echo -e "\e[32mVLESS链接如下：\e[0m"
-                echo -e "\e[33m$vless_uri\e[0m"
+                echo -e "\e[93m$vless_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 ;;
             5)
@@ -384,44 +370,34 @@ install_hysteria2() {
                 sudo systemctl status hysteria-server.service
                 ;;
             4)
-                local config_file="/etc/hysteria/config.yaml"
+                config_file="/etc/hysteria/config.yaml"
                 get_domain_from_cert() {
                     local cert_file=$1
-                    local domain=$(openssl x509 -in "$cert_file" -text -noout | grep -Po "DNS:[^,]*" | head -n 1 | sed 's/DNS://')
-                    if [[ -z "$domain" ]]; then
-                    domain=$(openssl x509 -in "$cert_file" -text -noout | grep -Po "CN=[^ ]*" | sed 's/CN=//')
-                    fi
-                    echo "$domain"
-                }
+                    openssl x509 -in "$cert_file" -text -noout | grep -Po "DNS:[^,]*" | head -n 1 | sed 's/DNS://' ||
+                    openssl x509 -in "$cert_file" -text -noout | grep -Po "CN=[^ ]*" | sed 's/CN=//'
+}
                 if [ ! -f "$config_file" ]; then
                     echo "Error: Config file not found at $config_file"
                     exit 1
                 fi
-                local port=$(grep "^listen:" "$config_file" | awk -F: '{print $3}')
-                if [ -z "$port" ]; then
-                    port="443"
-                fi
-                local password=$(grep "^  password:" "$config_file" | awk '{print $2}')
-                local domain=$(grep "domains:" "$config_file" -A 1 | tail -n 1 | tr -d " -")
+                port=$(grep "^listen:" "$config_file" | awk -F: '{print $3}' || echo "443")
+                password=$(grep "^  password:" "$config_file" | awk '{print $2}')
+                domain=$(grep "domains:" "$config_file" -A 1 | tail -n 1 | tr -d " -")
                 if [ -z "$domain" ]; then
-                    local cert_path=$(grep "cert:" "$config_file" | awk '{print $2}' | sed 's/"//g')
-                    if [ -z "$cert_path" ]; then
-                        echo "Error: No domain or certificate path found in config.yaml"
-                        exit 1
-                    fi
-                    if [ ! -f "$cert_path" ]; then
-                        echo "Error: Certificate file not found at $cert_path"
+                    cert_path=$(grep "cert:" "$config_file" | awk '{print $2}' | tr -d '"')
+                    if [ -z "$cert_path" ] || [ ! -f "$cert_path" ]; then
+                        echo "Error: No domain or certificate path found or certificate file not found."
                         exit 1
                     fi
                     domain=$(get_domain_from_cert "$cert_path")
-                     if [ -z "$domain" ]; then
-                    echo "Error: Failed to extract domain from certificate"
-                    exit 1
-                     fi
+                    if [ -z "$domain" ]; then
+                        echo "Error: Failed to extract domain from certificate"
+                        exit 1
+                    fi
                 fi
-                local hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
+                hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
                 echo -e "\e[32mhysteria2 链接如下：\e[0m"
-                echo -e "\e[33m$hysteria2_uri\e[0m"
+                echo -e "\e[93m$hysteria2_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 ;;
             5)
