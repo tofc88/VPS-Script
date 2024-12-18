@@ -9,7 +9,7 @@
 display_main_menu() {
     clear
     echo "========================================="
-    echo -e "               \e[1;92mVPS管理脚本\e[0m"
+    echo -e "               \e[1;96mVPS管理脚本\e[0m"
     echo "========================================="
     echo "1) 系统信息"
     echo "2) 系统优化"
@@ -71,7 +71,7 @@ view_vps_info() {
 display_system_optimization_menu() {
     while true; do
         echo "========================================="
-    echo -e "               \e[93m系统优化\e[0m       "
+    echo -e "               \e[1;32m系统优化\e[0m       "
         echo "========================================="
         echo "1) 校准时间"
         echo "2) 更新系统"
@@ -140,7 +140,7 @@ enable_bbr() {
 root_login() {
     while true; do
         echo "========================================="
-        echo -e "               \e[36mROOT登录\e[0m   "
+        echo -e "               \e[1;34mROOT登录\e[0m   "
         echo "========================================="
         echo "1) 设置密码"
         echo "2) 编辑配置（修改 PermitRootLogin 与 PasswordAuthentication 为 yes）"
@@ -168,7 +168,7 @@ root_login() {
 apply_certificate() {
     while true; do
         echo "========================================="
-        echo -e "               \e[93m申请证书\e[0m     "
+        echo -e "               \e[1;32m申请证书\e[0m     "
         echo "========================================="
         echo "1) 安装脚本"
         echo "2) 申请证书"
@@ -256,7 +256,7 @@ apply_certificate() {
 install_xray() {
     while true; do
         echo "========================================="
-        echo -e "               \e[93m安装Xray\e[0m   "
+        echo -e "               \e[1;32m安装Xray\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置（填加UUID）"
@@ -356,7 +356,7 @@ install_xray() {
 install_hysteria2() {
     while true; do    
         echo "========================================="
-        echo -e "           \e[93m安装hysteria2\e[0m  "
+        echo -e "           \e[1;32m安装hysteria2\e[0m  "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置（填加域名）"
@@ -448,7 +448,7 @@ install_hysteria2() {
 install_1panel() {
     while true; do
         echo "========================================="
-        echo -e "               \e[93m安装1Panel\e[0m "
+        echo -e "               \e[1;32m安装1Panel\e[0m "
         echo "========================================="
         echo "1) 安装面板"
         echo "2) 安装防火墙"
