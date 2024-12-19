@@ -376,7 +376,8 @@ install_hysteria2() {
         echo "2) 编辑配置（添加域名）"
         echo "3) 重启服务"
         echo "4) 生成链接"        
-        echo "5) 卸载服务"
+        echo "5) 端口跳跃"
+        echo "6) 卸载服务"
         echo "0) 返回主菜单"
         echo "========================================="
         read -p "请选择功能 [1-0]: " hysteria_choice
@@ -432,6 +433,36 @@ install_hysteria2() {
                 echo
                 ;;
             5)
+                default_redirect_port=443
+                default_start_port=60000
+                default_end_port=65535
+                config_file="/etc/hysteria/config.yaml"
+                redirect_port=$(
+                if [[ -f "$config_file" ]]; then
+                    grep 'listen:' "$config_file" | awk -F':' '{print $NF}'
+                fi
+)
+                [[ -z "$redirect_port" || ! "$redirect_port" =~ ^[0-9]+$ || "$redirect_port" -lt 1 || "$redirect_port" -gt 65535 ]] && redirect_port="$default_redirect_port"
+                read -p "请输入起始端口号 (按 Enter 使用默认值 60000): " start_port
+                [[ -z "$start_port" ]] && start_port="$default_start_port"
+                [[ "$start_port" =~ ^[0-9]+$ && "$start_port" -ge 1 && "$start_port" -le 65535 ]] || { echo "起始端口号无效, 使用默认值 60000"; start_port="$default_start_port"; }
+                read -p "请输入结束端口号 (按 Enter 使用默认值 65535): " end_port
+                [[ -z "$end_port" ]] && end_port="$default_end_port"
+                [[ "$end_port" =~ ^[0-9]+$ && "$end_port" -ge 1 && "$end_port" -le 65535 && "$end_port" -ge "$start_port" ]] || { echo "结束端口号无效，使用默认值 65535"; end_port="$default_end_port"; }
+                interfaces=($(ip -o link | awk -F': ' '{if ($2 != "lo") print $2}'))
+                [[ ${#interfaces[@]} -eq 0 ]] && { echo "未找到网络接口，无法执行 iptables 命令。"; exit 1; }
+                selected_interface="${interfaces[0]}"
+                iptables_command="iptables -t nat -A PREROUTING -i $selected_interface -p udp --dport $start_port:$end_port -j REDIRECT --to-ports $redirect_port"
+                if eval "$iptables_command"; then
+                echo -e "\e[32m端口跳跃设置成功!\e[0m"
+                else
+                echo "iptables命令执行失败。"
+                exit 1
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            6)
                 bash <(curl -fsSL https://get.hy2.sh/) --remove && \
                 rm -rf /etc/hysteria
                 userdel -r hysteria
