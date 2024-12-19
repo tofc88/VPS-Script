@@ -268,7 +268,7 @@ install_xray() {
         echo -e "               \e[1;32m安装Xray\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
-        echo "2) 编辑配置（填加UUID）"
+        echo "2) 编辑配置（填入UUID、域名及私钥）"
         echo "3) 重启服务"
         echo "4) 生成链接"
         echo "5) 卸载服务"
@@ -278,9 +278,14 @@ install_xray() {
         case "$xray_choice" in
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
-                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc" && \
-                echo -e "\e[32mXray 安装/升级完成！以下是uuid：\e[0m"
+                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-XTLS-Vision-REALITY/config_server.jsonc" && \
+                echo -e "\e[32mXray 安装/升级完成！"
+                echo -e "\e[32m以下是UUID：\e[0m"
                 echo -e "\e[31m$(xray uuid)\e[0m"
+                echo -e "\e[32m以下是密钥，其中Private key填入配置文件，Public key填入客户端。\e[0m"
+                echo -e "\e[33m$(xray x25519)\e[0m"
+                echo -e "\e[32m以下是shortIds：\e[0m"                
+                echo -e "\e[34m$(openssl rand -hex 8)\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -295,41 +300,46 @@ install_xray() {
                 ;;
             4)
                 CONFIG_PATH="/usr/local/etc/xray/config.json"
+                remove_spaces_and_quotes() {
+                    echo "$1" | sed 's/[[:space:]]*$//;s/^ *//;s/^"//;s/"$//'
+}
                 extract_field() {
                     local pattern=$1
                     local match=$2
                     grep -aPo "\"$pattern\":\s*$match" "$CONFIG_PATH" | head -n 1 | sed -E "s/\"$pattern\":\s*//;s/^\"//;s/\"$//"
 }
+                extract_server_name() {
+                    local result=$(grep -aA 2 "\"serverNames\": \[" "$CONFIG_PATH" | awk 'NR==2{gsub(/^\s+|\s*\/\/.*$/,"");split($0,a,","); for (i in a) {gsub(/^[\"\s]+|[\"\s]+$/,"",a[i]);printf "%s ",a[i]}}')
+                    if [[ -n "$result" ]]; then
+                        remove_spaces_and_quotes "$result"
+                    fi
+}
                 extract_list_field() {
                     local list_parent=$1
                     local list_field=$2
-                    grep -aPoz "\"$list_parent\":\s*\[\s*\{[^}]*\}\s*\]" "$CONFIG_PATH" | grep -aPo "\"$list_field\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$list_field\":\s*\"([^\"]*)\"/\1/"
-}
-                get_domain_from_cert() {
-                    local cert_file=$1
-                    openssl x509 -in "$cert_file" -text -noout | grep -aPo "DNS:[^,]*" | sed 's/DNS://' | head -n 1 ||
-                    openssl x509 -in "$cert_file" -text -noout | grep -aPo "CN=[^ ]*" | sed 's/CN=//'
+                    if [[ "$list_field" == "shortIds" || "$list_field" == "serverNames" ]]; then
+                        local result=$(grep -aA 2 "\"$list_field\": \[" "$CONFIG_PATH" | awk 'NR==2{gsub(/^\s+|\s*\/\/.*$/,"");split($0,a,","); for (i in a) {gsub(/^[\"\s]+|[\"\s]+$/,"",a[i]);printf "%s ",a[i]}}')
+                        if [[ -n "$result" ]]; then
+                            remove_spaces_and_quotes "$result"
+                        fi
+                    else
+                        grep -aPoz "\"$list_parent\":\s*\[\s*\{[^}]*\}\s*\]" "$CONFIG_PATH" | grep -aPo "\"$list_field\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$list_field\":\s*\"([^\"]*)\"/\1/"
+                    fi
 }
                 get_public_ip() {
                     curl -s https://api.ipify.org || echo "127.0.0.1"
 }
                 UUID=$(extract_list_field "clients" "id")
                 PORT=$(extract_field "port" "\d+")
-                WS_PATH=$(extract_field "path" "\"[^\"]*\"")
                 TLS=$(extract_field "security" "\"[^\"]*\"")
-                CERT_PATH=$(extract_list_field "certificates" "certificateFile")
-                if [[ -z "$CERT_PATH" ]]; then
-                    echo "Error: CERT_PATH not found in config.json"
-                    exit 1
-                fi
-                DOMAIN=$(get_domain_from_cert "$CERT_PATH")
-                SNI=${DOMAIN:-"your.domain.net"}
-                HOST=${DOMAIN:-"your.domain.net"}
+                SERVER_NAME=$(extract_server_name)
+                SHORT_IDS=$(extract_list_field "realitySettings" "shortIds")
+                SNI=${SERVER_NAME:-"your.domain.net"}
                 ADDRESS=$(get_public_ip)
-                WS_PATH=${WS_PATH:-"/"}
-                TLS=${TLS:-"tls"}
                 PORT=${PORT:-"443"}
-                vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
+                FLOW=$(extract_field "flow" "\"[^\"]*\"")
+                SID=${SHORT_IDS:-""}
+                vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&flow=${FLOW}&security=reality&sni=${SNI}&fp=chrome&sid=${SID}&type=tcp&headerType=none#Xray"
                 echo -e "\e[32mVLESS链接如下：\e[0m"
                 echo -e "\e[93m$vless_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
@@ -358,7 +368,7 @@ install_hysteria2() {
         echo -e "           \e[1;32m安装hysteria2\e[0m  "
         echo "========================================="
         echo "1) 安装/升级"
-        echo "2) 编辑配置（填加域名）"
+        echo "2) 编辑配置（填入域名）"
         echo "3) 重启服务"
         echo "4) 生成链接"        
         echo "5) 卸载服务"
