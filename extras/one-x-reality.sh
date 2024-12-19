@@ -282,8 +282,11 @@ install_xray() {
                 echo -e "\e[32mXray 安装/升级完成！"
                 echo -e "\e[32m以下是UUID：\e[0m"
                 echo -e "\e[31m$(xray uuid)\e[0m"
-                echo -e "\e[32m以下是密钥，其中Private key填入配置文件，Public key填入客户端。\e[0m"
-                echo -e "\e[33m$(xray x25519)\e[0m"
+                keys=$(xray x25519)
+                export PRIVATE_KEY=$(echo "$keys" | head -n 1 | awk '{print $3}' | sed 's/^-//')
+                export PUBLIC_KEY=$(echo "$keys" | tail -n 1 | awk '{print $3}' | sed 's/^-//')
+                echo -e "\e[32m以下是私钥：\e[0m"
+                echo -e "\e[33m$PRIVATE_KEY\e[0m"                
                 echo -e "\e[32m以下是shortIds：\e[0m"                
                 echo -e "\e[34m$(openssl rand -hex 8)\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
@@ -342,6 +345,8 @@ install_xray() {
                 vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&flow=${FLOW}&security=reality&sni=${SNI}&fp=chrome&sid=${SID}&type=tcp&headerType=none#Xray"
                 echo -e "\e[32mVLESS链接如下：\e[0m"
                 echo -e "\e[93m$vless_uri\e[0m"
+                echo -e "\e[32m以下是公钥：\e[0m"
+                echo -e "\e[33m$PUBLIC_KEY\e[0m"                
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
