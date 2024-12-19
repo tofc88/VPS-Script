@@ -13,10 +13,11 @@ display_main_menu() {
     echo "========================================="
     echo "1) 系统信息"
     echo "2) 系统优化"
-    echo "3) 申请证书"
-    echo "4) 安装Xray"
-    echo "5) 安装hysteria2"
-    echo "6) 安装1Panel"
+    echo "3) 常用工具"
+    echo "4) 申请证书"
+    echo "5) 安装Xray"
+    echo "6) 安装hysteria2"
+    echo "7) 安装1Panel"
     echo "0) 退出脚本"
     echo "========================================="
 }
@@ -166,6 +167,153 @@ root_login() {
             *) echo "无效选项，请重新输入。" ;;
         esac
     done
+}
+
+# 常用工具
+common_tools() {
+    while true; do
+        echo "========================================="
+        echo -e "               \e[1;32m常用工具\e[0m "
+        echo "========================================="
+        echo "1) 查找文件"
+        echo "2) 删除文件"
+        echo "3) 查看进程"
+        echo "4) 关闭进程"
+        echo "5) 查看端口"
+        echo "6) 开放端口"
+        echo "0) 返回主菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-0]: " panel_choice
+        case "$panel_choice" in
+            1)
+                read -p "请输入要查找的文件名或文件名的一部分: " filename
+                if [[ -z "$filename" ]]; then
+                echo "文件名不能为空。"
+                exit 1
+                fi
+                find / -type f -name "*$filename*" 2>/dev/null
+                if [[ $? -ne 0 ]]; then
+                    echo "未找到匹配的文件。"
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            2)  
+                read -p "请输入要删除的文件名或文件名的一部分: " filename
+                if [[ -z "$filename" ]]; then
+                echo "文件名不能为空。"
+                exit 1
+                fi
+                files=($(find / -type f -name "*$filename*" 2>/dev/null))
+                if [[ ${#files[@]} -eq 0 ]]; then
+                    echo "未找到匹配的文件。"
+                    exit 0
+                fi
+                echo "找到以下文件:"
+                for i in "${!files[@]}"; do
+                    echo "$((i+1)). ${files[$i]}"
+                done
+                read -p "确定要删除这些文件吗？ (y/n): " choice
+                if [[ "$choice" == "y" ]]; then
+                for file in "${files[@]}"; do
+                    rm -f "$file"
+                done
+                echo -e "\e[32m文件已删除!\e[0m"
+                elif [[ "$choice" == "n" ]]; then
+                    echo "取消删除。"
+                    exit 0
+                else
+                echo "无效的选项，未删除文件。"
+                exit 1
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                                
+                ;;
+            3)  
+                ps aux
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                                
+                ;;
+            4)
+                while true; do
+                read -p "请输入要关闭的进程 PID: " pid
+                if [[ "$pid" =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo "无效的 PID，请输入一个整数。"
+                fi
+                done
+                if kill "$pid"; then
+                echo -e "\e[32m1进程 $pid 已成功关闭！\e[0m"
+                else
+                echo "进程 $pid 无法正常关闭 (SIGTERM)，是否需要强制关闭 (SIGKILL)？ (y/n)"
+                read -p "请选择 (y/n): " choice
+                if [[ "$choice" == "y" ]]; then
+                    if kill -9 "$pid"; then
+                    echo -e "\e[32m进程 $pid 已被强制关闭！\e[0m"
+                    else
+                        echo "进程 $pid 强制关闭失败。"
+                        exit 1
+                    fi
+                    elif [[ "$choice" == "n" ]]; then
+                    echo "取消强制关闭"
+                    exit 0
+                    else
+                    echo "无效的选项，进程未关闭。"
+                    exit 1
+                fi
+                fi              
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            5)
+if command -v ss &>/dev/null; then
+    echo -e "端口     类型    程序名               PID"
+    ss -tulnp | awk 'NR>1 {
+        # 提取端口
+        split($5, a, ":");
+        # 提取程序名和PID
+        split($7, b, ",");
+        gsub(/[()]/, "", b[1]);
+        gsub(/pid=/, "", b[2]);
+        gsub(/users:/, "", b[1]);
+        gsub(/"/, "", b[1]);
+        
+        # 仅显示实际绑定端口的服务，过滤掉端口为空或为 "*" 的服务
+        if (a[2] != "" && a[2] != "*") {
+            printf "%-8s %-7s %-20s %-6s\n", a[2], $1, b[1], b[2];
+        }
+    }'
+else
+    echo -e "端口     类型    程序名               PID"
+    netstat -tulnp | awk 'NR>2 {
+        # 提取端口
+        split($4, a, ":");
+        # 提取程序名和PID
+        split($7, b, "/");
+        gsub(/[()]/, "", b[1]);
+        gsub(/pid=/, "", b[2]);
+        gsub(/users:/, "", b[1]);
+        gsub(/"/, "", b[1]);
+        
+        # 仅显示实际绑定端口的服务，过滤掉端口为空或为 "*" 的服务
+        if (a[2] != "" && a[2] != "*") {
+            printf "%-8s %-7s %-20s %-6s\n", a[2], $1, b[1], b[2];
+        }
+    }'
+fi
+
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            0)
+                return
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
+        esac
+    done    
 }
 
 # 申请证书
@@ -654,10 +802,11 @@ while true; do
     case "$choice" in
         1) view_vps_info ;;
         2) display_system_optimization_menu ;;
-        3) apply_certificate ;;
-        4) install_xray ;;
-        5) install_hysteria2 ;;
-        6) install_1panel ;;
+        3) common_tools ;;
+        4) apply_certificate ;;
+        5) install_xray ;;
+        6) install_hysteria2 ;;
+        7) install_1panel ;;
         0)
             echo -e "\e[32m退出脚本，感谢使用！\e[0m"
             exit 0
