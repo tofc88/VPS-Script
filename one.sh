@@ -261,11 +261,31 @@ apply_certificate() {
     done
 }
 
-# 安装 Xray
+# 安装Xray
 install_xray() {
     while true; do
         echo "========================================="
-        echo -e "               \e[1;32m安装Xray\e[0m   "
+    echo -e "               \e[1;32m安装Xray\e[0m       "
+        echo "========================================="
+        echo "1) VLESS-WS-TLS"
+        echo "2) VLESS-TCP-REALITY"
+        echo "0) 返回主菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-0]: " opt_choice
+        case "$opt_choice" in
+            1) install_xray_tls ;;
+            2) install_xray_reality ;;
+            0) return ;;
+            *) echo "无效选项，请重新输入。" ;;
+        esac
+    done
+}
+
+# 安装VLESS-WS-TLS
+install_xray_tls() {
+    while true; do
+        echo "========================================="
+        echo -e "               \e[1;34mVLESS-WS-TLS\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置（添加UUID）"
@@ -351,7 +371,112 @@ install_xray() {
     done
 }
 
-# 安装 hysteria2
+# 安装VLESS-TCP-REALITY
+install_xray_reality() {
+    while true; do
+        echo "========================================="
+        echo -e "               \e[1;34mVLESS-TCP-REALITY\e[0m   "
+        echo "========================================="
+        echo "1) 安装/升级"
+        echo "2) 编辑配置（添加UUID、域名及私钥）"
+        echo "3) 重启服务"
+        echo "4) 生成链接"
+        echo "5) 卸载服务"
+        echo "0) 返回主菜单"
+        echo "========================================="
+        read -p "请选择功能 [1-0]: " xray_choice
+        case "$xray_choice" in
+            1)
+                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
+                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-XTLS-Vision-REALITY/config_server.jsonc" && \
+                echo -e "\e[32mXray 安装/升级完成！"
+                echo -e "\e[32m以下是UUID：\e[0m"
+                echo -e "\e[31m$(xray uuid)\e[0m"
+                echo -e "\e[32m以下是私钥：\e[0m"
+                keys=$(xray x25519)
+                export PRIVATE_KEY=$(echo "$keys" | head -n 1 | awk '{print $3}' | sed 's/^-//')
+                export PUBLIC_KEY=$(echo "$keys" | tail -n 1 | awk '{print $3}' | sed 's/^-//')
+                echo -e "\e[33m$PRIVATE_KEY\e[0m"                
+                echo -e "\e[32m以下是shortIds：\e[0m"                
+                echo -e "\e[34m$(openssl rand -hex 8)\e[0m"
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            2)
+                sudo nano /usr/local/etc/xray/config.json
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            3)
+                sudo systemctl restart xray && \
+                sudo systemctl status xray
+                ;;
+            4)
+                CONFIG_PATH="/usr/local/etc/xray/config.json"
+                remove_spaces_and_quotes() {
+                    echo "$1" | sed 's/[[:space:]]*$//;s/^ *//;s/^"//;s/"$//'
+}
+                extract_field() {
+                    local pattern=$1
+                    local match=$2
+                    grep -aPo "\"$pattern\":\s*$match" "$CONFIG_PATH" | head -n 1 | sed -E "s/\"$pattern\":\s*//;s/^\"//;s/\"$//"
+}
+                extract_server_name() {
+                    local result=$(grep -aA 2 "\"serverNames\": \[" "$CONFIG_PATH" | awk 'NR==2{gsub(/^\s+|\s*\/\/.*$/,"");split($0,a,","); for (i in a) {gsub(/^[\"\s]+|[\"\s]+$/,"",a[i]);printf "%s ",a[i]}}')
+                    if [[ -n "$result" ]]; then
+                        remove_spaces_and_quotes "$result"
+                    fi
+}
+                extract_list_field() {
+                    local list_parent=$1
+                    local list_field=$2
+                    if [[ "$list_field" == "shortIds" || "$list_field" == "serverNames" ]]; then
+                        local result=$(grep -aA 2 "\"$list_field\": \[" "$CONFIG_PATH" | awk 'NR==2{gsub(/^\s+|\s*\/\/.*$/,"");split($0,a,","); for (i in a) {gsub(/^[\"\s]+|[\"\s]+$/,"",a[i]);printf "%s ",a[i]}}')
+                        if [[ -n "$result" ]]; then
+                            remove_spaces_and_quotes "$result"
+                        fi
+                    else
+                        grep -aPoz "\"$list_parent\":\s*\[\s*\{[^}]*\}\s*\]" "$CONFIG_PATH" | grep -aPo "\"$list_field\":\s*\"[^\"]*\"" | head -n 1 | sed -E "s/\"$list_field\":\s*\"([^\"]*)\"/\1/"
+                    fi
+}
+                get_public_ip() {
+                    curl -s https://api.ipify.org || echo "127.0.0.1"
+}
+                UUID=$(extract_list_field "clients" "id")
+                PORT=$(extract_field "port" "\d+")
+                TLS=$(extract_field "security" "\"[^\"]*\"")
+                SERVER_NAME=$(extract_server_name)
+                SHORT_IDS=$(extract_list_field "realitySettings" "shortIds")
+                SNI=${SERVER_NAME:-"your.domain.net"}
+                ADDRESS=$(get_public_ip)
+                PORT=${PORT:-"443"}
+                FLOW=$(extract_field "flow" "\"[^\"]*\"")
+                SID=${SHORT_IDS:-""}
+                vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&flow=${FLOW}&security=reality&sni=${SNI}&fp=chrome&sid=${SID}&type=tcp&headerType=none#Xray"
+                echo -e "\e[32mVLESS链接如下：\e[0m"
+                echo -e "\e[93m$vless_uri\e[0m"
+                echo -e "\e[32m以下是公钥：\e[0m"
+                echo -e "\e[33m$PUBLIC_KEY\e[0m"                
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            5)
+                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
+                echo -e "\e[32mXray已卸载。\e[0m"
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            0)
+                return 
+                ;;
+            *)
+                echo "无效选项，请重新输入。"
+                ;;
+        esac
+    done
+}
+
+# 安装hysteria2
 install_hysteria2() {
     while true; do    
         echo "========================================="
@@ -361,7 +486,8 @@ install_hysteria2() {
         echo "2) 编辑配置（添加域名）"
         echo "3) 重启服务"
         echo "4) 生成链接"        
-        echo "5) 卸载服务"
+        echo "5) 端口跳跃"
+        echo "6) 卸载服务"
         echo "0) 返回主菜单"
         echo "========================================="
         read -p "请选择功能 [1-0]: " hysteria_choice
@@ -417,6 +543,36 @@ install_hysteria2() {
                 echo
                 ;;
             5)
+                default_redirect_port=443
+                default_start_port=60000
+                default_end_port=65535
+                config_file="/etc/hysteria/config.yaml"
+                redirect_port=$(
+                if [[ -f "$config_file" ]]; then
+                    grep 'listen:' "$config_file" | awk -F':' '{print $NF}'
+                fi
+)
+                [[ -z "$redirect_port" || ! "$redirect_port" =~ ^[0-9]+$ || "$redirect_port" -lt 1 || "$redirect_port" -gt 65535 ]] && redirect_port="$default_redirect_port"
+                read -p "请输入起始端口号 (按 Enter 使用默认值 60000): " start_port
+                [[ -z "$start_port" ]] && start_port="$default_start_port"
+                [[ "$start_port" =~ ^[0-9]+$ && "$start_port" -ge 1 && "$start_port" -le 65535 ]] || { echo "起始端口号无效, 使用默认值 60000"; start_port="$default_start_port"; }
+                read -p "请输入结束端口号 (按 Enter 使用默认值 65535): " end_port
+                [[ -z "$end_port" ]] && end_port="$default_end_port"
+                [[ "$end_port" =~ ^[0-9]+$ && "$end_port" -ge 1 && "$end_port" -le 65535 && "$end_port" -ge "$start_port" ]] || { echo "结束端口号无效，使用默认值 65535"; end_port="$default_end_port"; }
+                interfaces=($(ip -o link | awk -F': ' '{if ($2 != "lo") print $2}'))
+                [[ ${#interfaces[@]} -eq 0 ]] && { echo "未找到网络接口，无法执行 iptables 命令。"; exit 1; }
+                selected_interface="${interfaces[0]}"
+                iptables_command="iptables -t nat -A PREROUTING -i $selected_interface -p udp --dport $start_port:$end_port -j REDIRECT --to-ports $redirect_port"
+                if eval "$iptables_command"; then
+                echo -e "\e[32m端口跳跃设置成功!\e[0m"
+                else
+                echo "iptables命令执行失败。"
+                exit 1
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            6)
                 bash <(curl -fsSL https://get.hy2.sh/) --remove && \
                 rm -rf /etc/hysteria
                 userdel -r hysteria
@@ -437,7 +593,7 @@ install_hysteria2() {
     done
 }
 
-# 安装 1Panel
+# 安装1Panel
 install_1panel() {
     while true; do
         echo "========================================="
