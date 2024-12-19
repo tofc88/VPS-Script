@@ -170,6 +170,8 @@ root_login() {
 }
 
 # 常用工具
+#!/bin/bash
+
 common_tools() {
     while true; do
         echo "========================================="
@@ -188,121 +190,144 @@ common_tools() {
             1)
                 read -p "请输入要查找的文件名或文件名的一部分: " filename
                 if [[ -z "$filename" ]]; then
-                echo "文件名不能为空。"
-                exit 1
-                fi
-                find / -type f -name "*$filename*" 2>/dev/null
-                if [[ $? -ne 0 ]]; then
-                    echo "未找到匹配的文件。"
+                    echo "文件名不能为空。"
+                else
+                    find / -type f -name "*$filename*" 2>/dev/null
+                    [[ $? -ne 0 ]] && echo "未找到匹配的文件。"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
-            2)  
-                read -p "请输入要删除的文件名或文件名的一部分: " filename
-                if [[ -z "$filename" ]]; then
-                echo "文件名不能为空。"
-                exit 1
-                fi
-                files=($(find / -type f -name "*$filename*" 2>/dev/null))
-                if [[ ${#files[@]} -eq 0 ]]; then
-                    echo "未找到匹配的文件。"
-                    exit 0
-                fi
-                echo "找到以下文件:"
-                for i in "${!files[@]}"; do
-                    echo "$((i+1)). ${files[$i]}"
+            2)
+                while true; do
+                    read -p "请输入要删除的文件名或文件名的一部分: " filename
+                    if [[ -z "$filename" ]]; then
+                        echo "文件名不能为空。"
+                        read -n 1 -s -r -p "按任意键返回..."
+                        echo
+                        break
+                    fi
+
+                    files=($(find / -type f -name "*$filename*" 2>/dev/null))
+                    if [[ ${#files[@]} -eq 0 ]]; then
+                        echo "未找到匹配的文件。"
+                        read -n 1 -s -r -p "按任意键返回..."
+                        echo
+                        break
+                    fi
+
+                    echo "找到以下文件:"
+                    for i in "${!files[@]}"; do
+                        echo "$((i+1)). ${files[$i]}"
+                    done
+
+                    read -p "确定要删除这些文件吗？ (y/n): " choice
+                    if [[ "$choice" == "y" ]]; then
+                        for file in "${files[@]}"; do
+                            rm -f "$file"
+                        done
+                        echo -e "\e[32m文件已删除!\e[0m"
+                    elif [[ "$choice" == "n" ]]; then
+                        echo "取消删除。"
+                    else
+                        echo "无效的选项，未删除文件。"
+                    fi
+
+                    read -n 1 -s -r -p "按任意键返回当前菜单..."
+                    echo
+                    break
                 done
-                read -p "确定要删除这些文件吗？ (y/n): " choice
-                if [[ "$choice" == "y" ]]; then
-                for file in "${files[@]}"; do
-                    rm -f "$file"
-                done
-                echo -e "\e[32m文件已删除!\e[0m"
-                elif [[ "$choice" == "n" ]]; then
-                    echo "取消删除。"
-                    exit 0
-                else
-                echo "无效的选项，未删除文件。"
-                exit 1
-                fi
-                read -n 1 -s -r -p "按任意键返回..."
-                echo                                
                 ;;
-            3)  
+            3)
                 ps aux
                 read -n 1 -s -r -p "按任意键返回..."
-                echo                                
+                echo
                 ;;
             4)
                 while true; do
-                read -p "请输入要关闭的进程 PID: " pid
-                if [[ "$pid" =~ ^[0-9]+$ ]]; then
-                    break
-                else
-                    echo "无效的 PID，请输入一个整数。"
-                fi
-                done
-                if kill "$pid"; then
-                echo -e "\e[32m1进程 $pid 已成功关闭！\e[0m"
-                else
-                echo "进程 $pid 无法正常关闭 (SIGTERM)，是否需要强制关闭 (SIGKILL)？ (y/n)"
-                read -p "请选择 (y/n): " choice
-                if [[ "$choice" == "y" ]]; then
-                    if kill -9 "$pid"; then
-                    echo -e "\e[32m进程 $pid 已被强制关闭！\e[0m"
+                    read -p "请输入要关闭的进程 PID: " pid
+                    if [[ "$pid" =~ ^[0-9]+$ ]]; then
+                        if kill "$pid"; then
+                            echo -e "\e[32m进程 $pid 已成功关闭！\e[0m"
+                        else
+                            echo "进程 $pid 无法正常关闭 (SIGTERM)，是否需要强制关闭 (SIGKILL)？ (y/n)"
+                            read -p "请选择 (y/n): " choice
+                            if [[ "$choice" == "y" ]]; then
+                                if kill -9 "$pid"; then
+                                    echo -e "\e[32m进程 $pid 已被强制关闭！\e[0m"
+                                else
+                                    echo "进程 $pid 强制关闭失败。"
+                                fi
+                            elif [[ "$choice" == "n" ]]; then
+                                echo "取消强制关闭"
+                            else
+                                echo "无效的选项，进程未关闭。"
+                            fi
+                        fi
+                        break
                     else
-                        echo "进程 $pid 强制关闭失败。"
-                        exit 1
+                        echo "无效的 PID，请输入一个整数。"
                     fi
-                    elif [[ "$choice" == "n" ]]; then
-                    echo "取消强制关闭"
-                    exit 0
-                    else
-                    echo "无效的选项，进程未关闭。"
-                    exit 1
-                fi
-                fi              
+                done
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             5)
-if command -v ss &>/dev/null; then
-    echo -e "端口     类型    程序名               PID"
-    ss -tulnp | awk 'NR>1 {
-        # 提取端口
-        split($5, a, ":");
-        # 提取程序名和PID
-        split($7, b, ",");
-        gsub(/[()]/, "", b[1]);
-        gsub(/pid=/, "", b[2]);
-        gsub(/users:/, "", b[1]);
-        gsub(/"/, "", b[1]);
-        
-        # 仅显示实际绑定端口的服务，过滤掉端口为空或为 "*" 的服务
-        if (a[2] != "" && a[2] != "*") {
-            printf "%-8s %-7s %-20s %-6s\n", a[2], $1, b[1], b[2];
-        }
-    }'
-else
-    echo -e "端口     类型    程序名               PID"
-    netstat -tulnp | awk 'NR>2 {
-        # 提取端口
-        split($4, a, ":");
-        # 提取程序名和PID
-        split($7, b, "/");
-        gsub(/[()]/, "", b[1]);
-        gsub(/pid=/, "", b[2]);
-        gsub(/users:/, "", b[1]);
-        gsub(/"/, "", b[1]);
-        
-        # 仅显示实际绑定端口的服务，过滤掉端口为空或为 "*" 的服务
-        if (a[2] != "" && a[2] != "*") {
-            printf "%-8s %-7s %-20s %-6s\n", a[2], $1, b[1], b[2];
-        }
-    }'
-fi
-
+                if command -v ss &>/dev/null; then
+                    echo -e "端口     类型    程序名               PID"
+                    ss -tulnp | awk 'NR>1 {
+                        split($5, a, ":");
+                        split($7, b, ",");
+                        gsub(/[()]/, "", b[1]);
+                        gsub(/pid=/, "", b[2]);
+                        gsub(/users:/, "", b[1]);
+                        gsub(/"/, "", b[1]);
+                        if (a[2] != "" && a[2] != "*") {
+                            printf "%-8s %-7s %-20s %-6s\n", a[2], $1, b[1], b[2];
+                        }
+                    }'
+                else
+                    echo -e "端口     类型    程序名               PID"
+                    netstat -tulnp | awk 'NR>2 {
+                        split($4, a, ":");
+                        split($7, b, "/");
+                        gsub(/[()]/, "", b[1]);
+                        gsub(/pid=/, "", b[2]);
+                        gsub(/users:/, "", b[1]);
+                        gsub(/"/, "", b[1]);
+                        if (a[2] != "" && a[2] != "*") {
+                            printf "%-8s %-7s %-20s %-6s\n", a[2], $1, b[1], b[2];
+                        }
+                    }'
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            6)
+                echo "请选择协议:"
+                echo "1) TCP"
+                echo "2) UDP"
+                read -p "请输入1或2: " protocol_choice
+                if [ "$protocol_choice" == "1" ]; then
+                    protocol="tcp"
+                elif [ "$protocol_choice" == "2" ]; then
+                    protocol="udp"
+                else
+                    echo "无效的选择，请输入1或2。"
+                    exit 1
+                fi
+                read -p "请输入端口号: " port
+                if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+                    echo "无效的端口号，请输入1到65535之间的数字。"
+                    exit 1
+                fi
+                command="sudo iptables -A INPUT -p $protocol --dport $port -j ACCEPT"
+                if $command; then
+                echo -e "\e[32m端口$port已开放（$protocol）!\e[0m"
+                else
+                    echo "执行命令失败。"
+                    exit 1
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -313,7 +338,7 @@ fi
                 echo "无效选项，请重新输入。"
                 ;;
         esac
-    done    
+    done
 }
 
 # 申请证书
