@@ -148,7 +148,7 @@ root_login() {
         echo -e "               \e[1;34mROOT登录\e[0m   "
         echo "========================================="
         echo "1) 设置密码"
-        echo "2) 编辑配置（修改 PermitRootLogin 与 PasswordAuthentication 为 yes）"
+        echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "0) 返回上级菜单"
         echo "========================================="
@@ -156,12 +156,17 @@ root_login() {
         case "$root_choice" in
             1) sudo passwd root ;;
             2) 
+                echo -e "\e[33m提示：将以下内容中PermitRootLogin与PasswordAuthentication的值改为yes。\e[0m"
+                read -n 1 -s -r -p "按任意键继续..."
                 sudo nano /etc/ssh/sshd_config 
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             3)
                 sudo systemctl restart sshd.service
+                echo -e "\e[32mROOT登录已开启！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
+                echo
                 ;;
             0) return ;;
             *) echo "无效选项，请重新输入。" ;;
@@ -183,12 +188,13 @@ common_tools() {
         echo "4) 关闭进程"
         echo "5) 查看端口"
         echo "6) 开放端口"
+        echo "7) 赋予权限"
         echo "0) 返回主菜单"
         echo "========================================="
         read -p "请选择功能 [1-0]: " panel_choice
         case "$panel_choice" in
             1)
-                read -p "请输入要查找的文件名或文件名的一部分: " filename
+                read -p "请输入要查找的文件名: " filename
                 if [[ -z "$filename" ]]; then
                     echo "文件名不能为空。"
                 else
@@ -200,7 +206,7 @@ common_tools() {
                 ;;
             2)
                 while true; do
-                    read -p "请输入要删除的文件名或文件名的一部分: " filename
+                    read -p "请输入要删除的文件名: " filename
                     if [[ -z "$filename" ]]; then
                         echo "文件名不能为空。"
                         read -n 1 -s -r -p "按任意键返回..."
@@ -331,6 +337,22 @@ common_tools() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
+            7)
+                read -p "请输入文件路径: " file_path
+                if [ ! -e "$file_path" ]; then
+                echo "错误: 文件或目录 '$file_path' 不存在。"
+                exit 1
+                fi
+                chmod 755 "$file_path"
+                if [ $? -eq 0 ]; then
+                echo -e "\e[32m'$file_path' 权限已设置为 755！\e[0m"
+                else
+                echo "错误: 设置 '$file_path' 权限为 755 失败。"
+                exit 1
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
             0)
                 return
                 ;;
@@ -358,34 +380,19 @@ apply_certificate() {
         case "$cert_choice" in
             1)
                 read -p "请输入邮箱地址: " email
-                # Check if cron is installed
+                sudo apt update
                 if ! command -v crontab &> /dev/null; then
-                    echo "正在检测cron是否安装..."
-                    # Install cron based on the OS (using a basic check)
-                    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-                        if command -v apt &> /dev/null; then
-                            sudo apt update
-                            sudo apt install -y cron
-                        elif command -v yum &> /dev/null; then
-                            sudo yum install -y cronie
-                            sudo systemctl enable crond
-                            sudo systemctl start crond
-                        elif command -v dnf &> /dev/null; then
-                             sudo dnf install -y cronie
-                             sudo systemctl enable crond
-                             sudo systemctl start crond
-                        else
-                            echo "不支持的包管理器，请手动安装cron。"
-                            continue
-                        fi
-                    else
-                      echo "不支持的操作系统，请手动安装cron。"
-                      continue
-                    fi
-                    echo "cron安装完成。"
+                    echo "正在安装 cron..."
+                    sudo apt install -y cron
+                    echo -e "\e[32mcron 安装完成！\e[0m"
+                fi
+                if ! command -v socat &> /dev/null; then
+                    echo "正在安装 socat..."
+                    sudo apt install -y socat
+                    echo -e "\e[32msocat 安装完成！\e[0m"
                 fi
                 curl https://get.acme.sh | sh -s email="$email"
-                echo -e "\e[32macme.sh 安装完成！\e[0m"
+                echo -e "\e[32macme.sh 安装完成！\e[0m"                
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -420,7 +427,7 @@ apply_certificate() {
                 ;;
             5)
                 ~/.acme.sh/acme.sh --uninstall
-                echo -e "\e[32macme.sh已卸载。\e[0m"
+                echo -e "\e[32macme.sh 已卸载。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -461,7 +468,7 @@ install_xray_tls() {
         echo -e "               \e[1;34mVLESS-WS-TLS\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
-        echo "2) 编辑配置（添加UUID）"
+        echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "4) 生成链接"
         echo "5) 卸载服务"
@@ -472,12 +479,15 @@ install_xray_tls() {
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
                     sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc" && \
-                echo -e "\e[32mXray 安装/升级完成！以下是uuid：\e[0m"
+                echo -e "\e[32mXray 安装/升级完成！\e[0m"
+                echo "以下是uuid："
                 echo -e "\e[31m$(xray uuid)\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
+                echo -e "\e[33m提示：将UUID填入以下文件中。\e[0m"
+                read -n 1 -s -r -p "按任意键继续..."                
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -523,7 +533,7 @@ install_xray_tls() {
                 TLS=${TLS:-"tls"}
                 PORT=${PORT:-"443"}
                 vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
-                echo -e "\e[32mVLESS链接如下：\e[0m"
+                echo "VLESS链接如下"
                 echo -e "\e[93m$vless_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -551,7 +561,7 @@ install_xray_reality() {
         echo -e "               \e[1;34mVLESS-TCP-REALITY\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
-        echo "2) 编辑配置（添加UUID、域名及私钥）"
+        echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "4) 生成链接"
         echo "5) 卸载服务"
@@ -562,20 +572,22 @@ install_xray_reality() {
             1)
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
                     sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-XTLS-Vision-REALITY/config_server.jsonc" && \
-                echo -e "\e[32mXray 安装/升级完成！"
-                echo -e "\e[32m以下是UUID：\e[0m"
+                echo -e "\e[32mXray 安装/升级完成！\e[0m"
+                echo "以下是UUID："
                 echo -e "\e[31m$(xray uuid)\e[0m"
-                echo -e "\e[32m以下是私钥：\e[0m"
+                echo "以下是私钥："
                 keys=$(xray x25519)
                 export PRIVATE_KEY=$(echo "$keys" | head -n 1 | awk '{print $3}' | sed 's/^-//')
                 export PUBLIC_KEY=$(echo "$keys" | tail -n 1 | awk '{print $3}' | sed 's/^-//')
-                echo -e "\e[33m$PRIVATE_KEY\e[0m"                
-                echo -e "\e[32m以下是shortIds：\e[0m"                
+                echo -e "\e[93m$PRIVATE_KEY\e[0m"                
+                echo "以下是ShortIds："                
                 echo -e "\e[34m$(openssl rand -hex 8)\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
+                echo -e "\e[33m提示：将UUID、目标网站及私钥填入以下文件中，ShortIds非必须。\e[0m"
+                read -n 1 -s -r -p "按任意键继续..."                                
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -626,10 +638,11 @@ install_xray_reality() {
                 FLOW=$(extract_field "flow" "\"[^\"]*\"")
                 SID=${SHORT_IDS:-""}
                 vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&flow=${FLOW}&security=reality&sni=${SNI}&fp=chrome&sid=${SID}&type=tcp&headerType=none#Xray"
-                echo -e "\e[32mVLESS链接如下：\e[0m"
-                echo -e "\e[93m$vless_uri\e[0m"
-                echo -e "\e[32m以下是公钥：\e[0m"
-                echo -e "\e[33m$PUBLIC_KEY\e[0m"                
+                echo "VLESS链接如下："
+                echo -e "\e[32m$vless_uri\e[0m"
+                echo "以下是公钥："
+                echo -e "\e[93m$PUBLIC_KEY\e[0m"                
+                echo -e "\e[33m提示：将公钥填入客户端中。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -649,14 +662,14 @@ install_xray_reality() {
     done
 }
 
-# 安装hysteria2
+# 安装Hysteria2
 install_hysteria2() {
     while true; do    
         echo "========================================="
-        echo -e "           \e[1;32m安装hysteria2\e[0m  "
+        echo -e "           \e[1;32m安装Hysteria2\e[0m  "
         echo "========================================="
         echo "1) 安装/升级"
-        echo "2) 编辑配置（添加域名）"
+        echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "4) 生成链接"        
         echo "5) 端口跳跃"
@@ -675,6 +688,8 @@ install_hysteria2() {
                 echo
                 ;;
             2)
+                echo -e "\e[33m提示：将域名填入以下文件中。\e[0m"
+                read -n 1 -s -r -p "按任意键继续..."                                                
                 sudo nano /etc/hysteria/config.yaml
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -710,8 +725,8 @@ install_hysteria2() {
                     fi
                 fi
                 hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
-                echo -e "\e[32mhysteria2 链接如下：\e[0m"
-                echo -e "\e[93m$hysteria2_uri\e[0m"
+                echo "hysteria2 链接如下："
+                echo -e "\e[32m$hysteria2_uri\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -782,19 +797,19 @@ install_1panel() {
         case "$panel_choice" in
             1)
                 curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
-                echo -e "\e[32m1Panel安装完成！\e[0m"
+                echo -e "\e[32m1Panel 安装完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
                 sudo apt install ufw
-                echo -e "\e[32mufw安装完成！\e[0m"
+                echo -e "\e[32mufw 安装完成！\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             3)
                 sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
-                echo -e "\e[32mufw卸载完成。\e[0m"
+                echo -e "\e[32mufw 卸载完成。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -803,7 +818,7 @@ install_1panel() {
                 sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
                     sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
                     sudo groupdel docker
-                echo -e "\e[32m1Panel卸载完成。\e[0m"
+                echo -e "\e[32m1Panel 卸载完成。\e[0m"
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
