@@ -206,43 +206,47 @@ common_tools() {
                 ;;
             2)
                 while true; do
-                    read -p "请输入要删除的文件名: " filename
+                    read -p "请输入要删除的文件或目录名（支持部分匹配）: " filename
                     if [[ -z "$filename" ]]; then
-                        echo "文件名不能为空。"
-                        read -n 1 -s -r -p "按任意键返回..."
-                        echo
+                        echo "文件名不能为空，退出操作。"
                         break
                     fi
-
-                    files=($(find / -type f -name "*$filename*" 2>/dev/null))
+                    files=($(find / -type f -iname "*$filename*" -o -type d -iname "*$filename*" 2>/dev/null))
                     if [[ ${#files[@]} -eq 0 ]]; then
-                        echo "未找到匹配的文件。"
-                        read -n 1 -s -r -p "按任意键返回..."
-                        echo
-                        break
+                        echo "未找到匹配的文件或目录。"
+                        continue
                     fi
-
-                    echo "找到以下文件:"
+                    echo "找到以下文件或目录:"
                     for i in "${!files[@]}"; do
                         echo "$((i+1)). ${files[$i]}"
                     done
-
-                    read -p "确定要删除这些文件吗？ (y/n): " choice
-                    if [[ "$choice" == "y" ]]; then
-                        for file in "${files[@]}"; do
-                            rm -f "$file"
-                        done
-                        echo -e "\e[32m文件已删除!\e[0m"
-                    elif [[ "$choice" == "n" ]]; then
-                        echo "取消删除。"
-                    else
-                        echo "无效的选项，未删除文件。"
+                    read -p "请输入要删除的文件或目录编号（可多选，使用空格分隔，按 0 取消删除): " choices
+                    if [[ "$choices" == "0" ]]; then
+                        echo "取消删除操作。"
+                        continue
                     fi
-
-                    read -n 1 -s -r -p "按任意键返回当前菜单..."
-                    echo
-                    break
+                    IFS=' ' read -r -a choice_array <<< "$choices"
+                    for choice in "${choice_array[@]}"; do
+                        if [[ "$choice" -ge 1 && "$choice" -le ${#files[@]} ]]; then
+                            file="${files[$((choice-1))]}"
+                            read -p "确定要删除 $file 吗？ (y/n): " confirm
+                            if [[ "$confirm" == "y" ]]; then
+                                if [[ -d "$file" ]]; then
+                                    rm -rf "$file"
+                                    echo -e "\e[32m目录已删除: $file\e[0m"
+                                else
+                                    rm -f "$file"
+                                    echo -e "\e[32m文件已删除: $file\e[0m"
+                                fi
+                            else
+                                echo "取消删除 $file。"
+                            fi
+                        else
+                            echo "无效的选择: $choice"
+                        fi
+                    done
                 done
+                echo
                 ;;
             3)
                 ps aux
