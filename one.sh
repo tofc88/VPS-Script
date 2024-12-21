@@ -14,10 +14,11 @@ display_main_menu() {
     echo "1) 系统信息"
     echo "2) 系统优化"
     echo "3) 常用工具"
-    echo "4) 申请证书"
-    echo "5) 安装Xray"
-    echo "6) 安装hysteria2"
-    echo "7) 安装1Panel"
+    echo "4) 常用软件包"    
+    echo "5) 申请证书"
+    echo "6) 安装Xray"
+    echo "7) 安装hysteria2"
+    echo "8) 安装1Panel"
     echo "========================================="
 }
 
@@ -79,8 +80,8 @@ display_system_optimization_menu() {
         echo "4) 开启BBR"
         echo "5) ROOT登录"
         echo "========================================="
-        read -p "请输入数字 [1-5] 选择 (直接回车退出)：" opt_choice
-        case "$opt_choice" in
+        read -p "请输入数字 [1-5] 选择 (直接回车退出)：" root_choice
+        case "$root_choice" in
             1) calibrate_time ;;
             2) update_system ;;
             3) clean_system ;;
@@ -180,8 +181,6 @@ root_login() {
 }
 
 # 常用工具
-#!/bin/bash
-
 common_tools() {
     while true; do
         echo "========================================="
@@ -195,8 +194,8 @@ common_tools() {
         echo "6) 查看端口"
         echo "7) 开放端口"
         echo "========================================="
-        read -p "请输入数字 [1-7] 选择 (直接回车退出)：" panel_choice
-        case "$panel_choice" in
+        read -p "请输入数字 [1-7] 选择 (直接回车退出)：" root_choice
+        case "$root_choice" in
             1)
                 read -p "请输入要查找的文件名: " filename
                 if [[ -z "$filename" ]]; then
@@ -267,6 +266,8 @@ common_tools() {
                     done
                 done
                 echo
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
                 ;;
             4)
                 ps aux
@@ -334,30 +335,30 @@ common_tools() {
                 echo
                 ;;
             7)
-                echo "请选择协议:"
-                echo "1) TCP"
-                echo "2) UDP"
-                read -p "请输入1或2: " protocol_choice
-                if [ "$protocol_choice" == "1" ]; then
-                    protocol="tcp"
-                elif [ "$protocol_choice" == "2" ]; then
-                    protocol="udp"
-                else
-                    echo "无效的选择，请输入1或2。"
-                    exit 1
-                fi
-                read -p "请输入端口号: " port
-                if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-                    echo "无效的端口号，请输入1到65535之间的数字。"
-                    exit 1
-                fi
-                command="sudo iptables -A INPUT -p $protocol --dport $port -j ACCEPT"
-                if $command; then
-                echo -e "\e[32m端口$port已开放（$protocol）!\e[0m"
-                else
-                    echo "执行命令失败。"
-                    exit 1
-                fi
+                while true; do
+                    echo "请选择协议:"
+                    echo "1) TCP"
+                    echo "2) UDP"
+                    read -p "请输入1或2: " protocol_choice
+                    case "$protocol_choice" in
+                        1) protocol="tcp" ;;
+                        2) protocol="udp" ;;
+                        *) echo "无效的选择，请输入1或2。"
+                    break
+                    esac
+                    read -p "请输入端口号: " port
+                    if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+                        echo "无效的端口号，请输入1到65535之间的数字。"
+                    break
+                    fi
+                    command="sudo iptables -A INPUT -p $protocol --dport $port -j ACCEPT"
+                    if $command; then
+                        echo -e "\e[32m端口$port已开放（$protocol）!\e[0m"
+                    else
+                        echo "执行命令失败。"
+                    fi
+                    break
+                done
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -367,6 +368,99 @@ common_tools() {
             *)
                 echo "无效选项，请重新输入。"
                 ;;
+        esac
+    done
+}
+
+# 常用软件包
+install_package() {
+    while true; do
+        echo "========================================="
+        echo -e "               \e[1;32m常用软件包\e[0m   "
+        echo "========================================="
+        echo "1) apt"
+        echo "2) curl"
+        echo "3) nano"
+        echo "4) htop"
+        echo "5) git"
+        echo "6) docker"
+        echo "========================================="
+        read -p "请输入数字 [1-6] 选择 (直接回车退出)：" opt_choice
+        case "$opt_choice" in
+            1)  sudo apt update
+                echo -e "\e[32mapt 更新完成！\e[0m"
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            2)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (直接回车退出)：" action
+                case "$action" in
+                    1) sudo apt install -y curl && echo -e "\e[32mcurl 安装完成！\e[0m" ;;
+                    2) sudo apt remove -y curl && echo -e "\e[32mcurl 卸载完成！\e[0m" ;;
+                    "") ;;
+                    *) echo "无效选项，请重新输入。" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;
+            3)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (直接回车退出)：" action
+                case "$action" in
+                    1) sudo apt install -y nano && echo -e "\e[32mnano 安装完成！\e[0m" ;;
+                    2) sudo apt remove -y nano && echo -e "\e[32mnano 卸载完成！\e[0m" ;;
+                    "") ;;
+                    *) echo "无效选项，请重新输入。" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;
+            4)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (直接回车退出)：" action
+                case "$action" in
+                    1) sudo apt install -y htop && echo -e "\e[32mhtop 安装完成！\e[0m" ;;
+                    2) sudo apt remove -y htop && echo -e "\e[32mhtop 卸载完成！\e[0m" ;;
+                    "") ;;
+                    *) echo "无效选项，请重新输入。" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;
+            5)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (直接回车退出)：" action
+                case "$action" in
+                    1) sudo apt install -y git && echo -e "\e[32mgit 安装完成！\e[0m" ;;
+                    2) sudo apt remove -y git && echo -e "\e[32mgit 卸载完成！\e[0m" ;;
+                    "") ;;
+                    *) echo "无效选项，请重新输入。" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;
+            6)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (直接回车退出)：" action
+                case "$action" in
+                    1) sudo apt install -y docker && echo -e "\e[32mdocker 安装完成！\e[0m" ;;
+                    2) sudo apt remove -y docker && echo -e "\e[32mdocker 卸载完成！\e[0m" ;;
+                    "") ;;
+                    *) echo "无效选项，请重新输入。" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;
+            "") 
+                return
+                ;;            
+            *) echo "无效选项，请重新输入。" ;;
         esac
     done
 }
@@ -404,15 +498,25 @@ apply_certificate() {
                 echo
                 ;;
             2)
-                read -p "请输入域名: " domain
-                ~/.acme.sh/acme.sh --issue --standalone -d "$domain"
-                echo -e "\e[32m证书申请完成！\e[0m"
+                while true; do
+                    read -p "请输入域名: " domain
+                    if ~/.acme.sh/acme.sh --issue --standalone -d "$domain"; then
+                        echo -e "\e[32m证书申请成功！\e[0m"
+                    else
+                        echo "证书申请失败，请检查域名是否正确并重试。"
+                    fi
+                break
+                done
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             3)
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-                echo -e "\e[32m已切换至Let's Encrypt服务！\e[0m"
+                if [[ $? -eq 0 ]]; then
+                    echo -e "\e[32m已切换至Let's Encrypt服务！\e[0m"
+                else
+                    echo -e "切换至Let's Encrypt服务失败，请检查是否正确安装acme.sh并确保网络连接正常。"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -872,10 +976,11 @@ while true; do
         1) view_vps_info ;;
         2) display_system_optimization_menu ;;
         3) common_tools ;;
-        4) apply_certificate ;;
-        5) install_xray ;;
-        6) install_hysteria2 ;;
-        7) install_1panel ;;
+        4) install_package;;
+        5) apply_certificate ;;
+        6) install_xray ;;
+        7) install_hysteria2 ;;
+        8) install_1panel ;;
         *)
             echo "无效选项，请输入数字 1-7 或直接回车退出！"
             ;;
