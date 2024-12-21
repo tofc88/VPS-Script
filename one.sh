@@ -153,7 +153,11 @@ root_login() {
         echo "========================================="
         read -p "请输入数字 [1-3] 选择 (直接回车退出)：" root_choice
         case "$root_choice" in
-            1) sudo passwd root ;;
+            1) 
+                sudo passwd root
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
             2) 
                 echo -e "\e[33m提示：将以下内容中PermitRootLogin与PasswordAuthentication的值改为yes。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."
