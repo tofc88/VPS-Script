@@ -35,9 +35,9 @@ view_vps_info() {
     echo "-------------"
     echo -e "\e[1;34mCPU占用:\e[0m \e[32m$(top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}')%\e[0m"
     echo -e "\e[1;34m系统负载:\e[0m \e[32m$(uptime | awk -F'load average:' '{print $2}' | sed 's/ //g')\e[0m"
-    local mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else print "数据不可用"}')
+    local mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else printf "\e[1;31m数据不可用\e[0m"}')
     echo -e "\e[1;34m物理内存:\e[0m \e[32m$mem_info \e[0m"
-    local swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
+    local swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else printf "\e[1;31m数据不可用\e[0m" }')
     echo -e "\e[1;34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
      
     echo -e "\e[1;34m硬盘占用:\e[0m \e[32m$(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')\e[0m"
@@ -90,7 +90,7 @@ display_system_optimization_menu() {
             "") 
                 return
                 ;;            
-            *) echo "无效选项，请重新输入。" ;;
+            *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
         esac
     done
 }
@@ -108,9 +108,12 @@ calibrate_time() {
 # 系统更新
 update_system() {
     echo -e "\n[更新系统]"
-    sudo apt update -y && sudo apt full-upgrade -y
-    sudo apt autoremove -y && sudo apt autoclean -y
-    echo -e "\e[32m系统更新完成！\e[0m"
+    if ! sudo apt update -y && ! sudo apt full-upgrade -y; then
+        echo -e "\e[1;31m系统更新失败！请检查网络连接或源列表。\e[0m"
+    else
+      sudo apt autoremove -y && sudo apt autoclean -y
+        echo -e "\e[32m系统更新完成！\e[0m"
+    fi
     read -n 1 -s -r -p "按任意键返回..."
     echo
 }
@@ -135,8 +138,11 @@ enable_bbr() {
     else
         echo "net.core.default_qdisc = fq" | sudo tee -a /etc/sysctl.conf
         echo "net.ipv4.tcp_congestion_control = bbr" | sudo tee -a /etc/sysctl.conf
-        sudo sysctl -p
-    echo -e "\e[32mBBR已开启！\e[0m"
+        if sudo sysctl -p; then
+           echo -e "\e[32mBBR已开启！\e[0m"
+        else
+            echo -e "\e[1;31mBBR 开启失败！\e[0m"
+        fi
     fi
     read -n 1 -s -r -p "按任意键返回..."
     echo
@@ -167,15 +173,18 @@ root_login() {
                 echo
                 ;;
             3)
-                sudo systemctl restart sshd.service
-                echo -e "\e[32mROOT登录已开启！\e[0m"
+                if sudo systemctl restart sshd.service; then
+                   echo -e "\e[32mROOT登录已开启！\e[0m"
+                else
+                    echo -e "\e[1;31mROOT登录开启失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             "") 
                 return
                 ;;            
-            *) echo "无效选项，请重新输入。" ;;
+            *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
         esac
     done
 }
@@ -199,10 +208,10 @@ common_tools() {
             1)
                 read -p "请输入要查找的文件名: " filename
                 if [[ -z "$filename" ]]; then
-                    echo "文件名不能为空。"
+                    echo -e "\e[1;31m文件名不能为空。\e[0m"
                 else
                     find / -type f -name "*$filename*" 2>/dev/null
-                    [[ $? -ne 0 ]] && echo "未找到匹配的文件。"
+                    [[ $? -ne 0 ]] && echo -e "\e[1;31m未找到匹配的文件。\e[0m"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -210,14 +219,14 @@ common_tools() {
             2)
                 read -p "请输入文件路径: " file_path
                 if [ ! -e "$file_path" ]; then
-                echo "错误: 文件或目录 '$file_path' 不存在。"
+                echo -e "\e[1;31m错误: 文件或目录 '$file_path' 不存在。\e[0m"
                 exit 1
                 fi
                 chmod 755 "$file_path"
                 if [ $? -eq 0 ]; then
                 echo -e "\e[32m'$file_path' 权限已设置为 755！\e[0m"
                 else
-                echo "错误: 设置 '$file_path' 权限为 755 失败。"
+                    echo -e "\e[1;31m错误: 设置 '$file_path' 权限为 755 失败。\e[0m"
                 exit 1
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
@@ -232,7 +241,7 @@ common_tools() {
                     fi
                     files=($(find / -type f -iname "*$filename*" -o -type d -iname "*$filename*" 2>/dev/null))
                     if [[ ${#files[@]} -eq 0 ]]; then
-                        echo "未找到匹配的文件或目录。"
+                        echo -e "\e[1;31m未找到匹配的文件或目录。\e[0m"
                         continue
                     fi
                     echo "找到以下文件或目录:"
@@ -261,7 +270,7 @@ common_tools() {
                                 echo "取消删除 $file。"
                             fi
                         else
-                            echo "无效的选择: $choice"
+                            echo -e "\e[1;31m无效的选择: $choice\e[0m"
                         fi
                     done
                 done
@@ -281,23 +290,23 @@ common_tools() {
                         if kill "$pid"; then
                             echo -e "\e[32m进程 $pid 已成功关闭！\e[0m"
                         else
-                            echo "进程 $pid 无法正常关闭 (SIGTERM)，是否需要强制关闭 (SIGKILL)？ (y/n)"
+                            echo -e "\e[1;31m进程 $pid 无法正常关闭 (SIGTERM)，是否需要强制关闭 (SIGKILL)？ (y/n)\e[0m"
                             read -p "请选择 (y/n): " choice
                             if [[ "$choice" == "y" ]]; then
                                 if kill -9 "$pid"; then
                                     echo -e "\e[32m进程 $pid 已被强制关闭！\e[0m"
                                 else
-                                    echo "进程 $pid 强制关闭失败。"
+                                    echo -e "\e[1;31m进程 $pid 强制关闭失败。\e[0m"
                                 fi
                             elif [[ "$choice" == "n" ]]; then
                                 echo "取消强制关闭"
                             else
-                                echo "无效的选项，进程未关闭。"
+                                echo -e "\e[1;31m无效的选项，进程未关闭。\e[0m"
                             fi
                         fi
                         break
                     else
-                        echo "无效的 PID，请输入一个整数。"
+                        echo -e "\e[1;31m无效的 PID，请输入一个整数。\e[0m"
                     fi
                 done
                 read -n 1 -s -r -p "按任意键返回..."
@@ -343,19 +352,19 @@ common_tools() {
                     case "$protocol_choice" in
                         1) protocol="tcp" ;;
                         2) protocol="udp" ;;
-                        *) echo "无效的选择，请输入1或2。"
+                        *) echo -e "\e[1;31m无效的选择，请输入1或2。\e[0m"
                     break
                     esac
                     read -p "请输入端口号: " port
                     if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-                        echo "无效的端口号，请输入1到65535之间的数字。"
+                        echo -e "\e[1;31m无效的端口号，请输入1到65535之间的数字。\e[0m"
                     break
                     fi
                     command="sudo iptables -A INPUT -p $protocol --dport $port -j ACCEPT"
                     if $command; then
                         echo -e "\e[32m端口$port已开放（$protocol）!\e[0m"
                     else
-                        echo "执行命令失败。"
+                        echo -e "\e[1;31m执行命令失败。\e[0m"
                     fi
                     break
                 done
@@ -366,7 +375,7 @@ common_tools() {
                 return
                 ;;            
             *)
-                echo "无效选项，请重新输入。"
+                echo -e "\e[1;31m无效选项，请重新输入。\e[0m"
                 ;;
         esac
     done
@@ -387,8 +396,12 @@ install_package() {
         echo "========================================="
         read -p "请输入数字 [1-6] 选择 (直接回车退出)：" opt_choice
         case "$opt_choice" in
-            1)  sudo apt update
-                echo -e "\e[32mapt 更新完成！\e[0m"
+            1)  
+                if sudo apt update; then
+                    echo -e "\e[32mapt 更新完成！\e[0m"
+                else
+                    echo -e "\e[1;31mapt 更新失败！请检查网络连接或源列表。\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -397,10 +410,20 @@ install_package() {
                 echo "2) 卸载"
                 read -p "请选择操作 (直接回车退出)：" action
                 case "$action" in
-                    1) sudo apt install -y curl && echo -e "\e[32mcurl 安装完成！\e[0m" ;;
-                    2) sudo apt remove -y curl && echo -e "\e[32mcurl 卸载完成！\e[0m" ;;
+                    1) if sudo apt install -y curl; then
+                           echo -e "\e[32mcurl 安装完成！\e[0m"
+                        else
+                            echo -e "\e[1;31mcurl 安装失败！\e[0m"
+                        fi
+                        ;;
+                    2) if sudo apt remove -y curl; then
+                            echo -e "\e[32mcurl 卸载完成！\e[0m"
+                        else
+                            echo -e "\e[1;31mcurl 卸载失败！\e[0m"
+                        fi
+                        ;;
                     "") ;;
-                    *) echo "无效选项，请重新输入。" ;;
+                    *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
                 esac
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
@@ -410,10 +433,20 @@ install_package() {
                 echo "2) 卸载"
                 read -p "请选择操作 (直接回车退出)：" action
                 case "$action" in
-                    1) sudo apt install -y nano && echo -e "\e[32mnano 安装完成！\e[0m" ;;
-                    2) sudo apt remove -y nano && echo -e "\e[32mnano 卸载完成！\e[0m" ;;
+                    1) if sudo apt install -y nano; then
+                            echo -e "\e[32mnano 安装完成！\e[0m"
+                        else
+                            echo -e "\e[1;31mnano 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2) if sudo apt remove -y nano; then
+                            echo -e "\e[32mnano 卸载完成！\e[0m"
+                        else
+                             echo -e "\e[1;31mnano 卸载失败！\e[0m"
+                        fi
+                        ;;
                     "") ;;
-                    *) echo "无效选项，请重新输入。" ;;
+                    *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
                 esac
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
@@ -423,10 +456,20 @@ install_package() {
                 echo "2) 卸载"
                 read -p "请选择操作 (直接回车退出)：" action
                 case "$action" in
-                    1) sudo apt install -y htop && echo -e "\e[32mhtop 安装完成！\e[0m" ;;
-                    2) sudo apt remove -y htop && echo -e "\e[32mhtop 卸载完成！\e[0m" ;;
+                    1) if sudo apt install -y htop; then
+                            echo -e "\e[32mhtop 安装完成！\e[0m"
+                        else
+                            echo -e "\e[1;31mhtop 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2) if sudo apt remove -y htop; then
+                           echo -e "\e[32mhtop 卸载完成！\e[0m"
+                        else
+                            echo -e "\e[1;31mhtop 卸载失败！\e[0m"
+                         fi
+                        ;;
                     "") ;;
-                    *) echo "无效选项，请重新输入。" ;;
+                    *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
                 esac
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
@@ -436,10 +479,20 @@ install_package() {
                 echo "2) 卸载"
                 read -p "请选择操作 (直接回车退出)：" action
                 case "$action" in
-                    1) sudo apt install -y git && echo -e "\e[32mgit 安装完成！\e[0m" ;;
-                    2) sudo apt remove -y git && echo -e "\e[32mgit 卸载完成！\e[0m" ;;
+                    1) if sudo apt install -y git; then
+                            echo -e "\e[32mgit 安装完成！\e[0m"
+                        else
+                           echo -e "\e[1;31mgit 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2)  if sudo apt remove -y git; then
+                            echo -e "\e[32mgit 卸载完成！\e[0m"
+                         else
+                            echo -e "\e[1;31mgit 卸载失败！\e[0m"
+                         fi
+                        ;;
                     "") ;;
-                    *) echo "无效选项，请重新输入。" ;;
+                    *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
                 esac
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
@@ -449,10 +502,20 @@ install_package() {
                 echo "2) 卸载"
                 read -p "请选择操作 (直接回车退出)：" action
                 case "$action" in
-                    1) sudo apt install -y docker && echo -e "\e[32mdocker 安装完成！\e[0m" ;;
-                    2) sudo apt remove -y docker && echo -e "\e[32mdocker 卸载完成！\e[0m" ;;
+                    1) if sudo apt install -y docker; then
+                            echo -e "\e[32mdocker 安装完成！\e[0m"
+                        else
+                            echo -e "\e[1;31mdocker 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2) if sudo apt remove -y docker; then
+                            echo -e "\e[32mdocker 卸载完成！\e[0m"
+                         else
+                            echo -e "\e[1;31mdocker 卸载失败！\e[0m"
+                        fi
+                         ;;
                     "") ;;
-                    *) echo "无效选项，请重新输入。" ;;
+                    *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
                 esac
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
@@ -460,7 +523,7 @@ install_package() {
             "") 
                 return
                 ;;            
-            *) echo "无效选项，请重新输入。" ;;
+            *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
         esac
     done
 }
@@ -484,16 +547,25 @@ apply_certificate() {
                 sudo apt update
                 if ! command -v crontab &> /dev/null; then
                     echo "正在安装 cron..."
-                    sudo apt install -y cron
-                    echo -e "\e[32mcron 安装完成！\e[0m"
+                    if sudo apt install -y cron; then
+                        echo -e "\e[32mcron 安装完成！\e[0m"
+                    else
+                        echo -e "\e[1;31mcron 安装失败！\e[0m"
+                    fi
                 fi
                 if ! command -v socat &> /dev/null; then
                     echo "正在安装 socat..."
-                    sudo apt install -y socat
-                    echo -e "\e[32msocat 安装完成！\e[0m"
+                    if sudo apt install -y socat; then
+                        echo -e "\e[32msocat 安装完成！\e[0m"
+                    else
+                        echo -e "\e[1;31msocat 安装失败！\e[0m"
+                    fi
                 fi
-                curl https://get.acme.sh | sh -s email="$email"
-                echo -e "\e[32macme.sh 安装完成！\e[0m"                
+                if curl https://get.acme.sh | sh -s email="$email"; then
+                    echo -e "\e[32macme.sh 安装完成！\e[0m"
+                else
+                    echo -e "\e[1;31macme.sh 安装失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -503,7 +575,7 @@ apply_certificate() {
                     if ~/.acme.sh/acme.sh --issue --standalone -d "$domain"; then
                         echo -e "\e[32m证书申请成功！\e[0m"
                     else
-                        echo "证书申请失败，请检查域名是否正确并重试。"
+                        echo -e "\e[1;31m证书申请失败，请检查域名是否正确并重试。\e[0m"
                     fi
                 break
                 done
@@ -515,7 +587,7 @@ apply_certificate() {
                 if [[ $? -eq 0 ]]; then
                     echo -e "\e[32m已切换至Let's Encrypt服务！\e[0m"
                 else
-                    echo -e "切换至Let's Encrypt服务失败，请检查是否正确安装acme.sh并确保网络连接正常。"
+                    echo -e "\e[1;31m切换至Let's Encrypt服务失败，请检查是否正确安装acme.sh并确保网络连接正常。\e[0m"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -524,21 +596,23 @@ apply_certificate() {
                 read -p "请输入域名: " domain
                 read -p "请输入证书安装路径（默认: /path/to）: " install_path
                 install_path=${install_path:-/path/to}
-                mkdir -p "$install_path" && \
-                ~/.acme.sh/acme.sh --installcert -d "$domain" \
-    --key-file "$install_path/private.key" --fullchain-file "$install_path/fullchain.crt" && \
-                sudo chmod 644 "$install_path/fullchain.crt" "$install_path/private.key"
-                if [[ $? -eq 0 ]]; then
-                echo -e "\e[32m证书安装完成！路径: $install_path\e[0m"
-                else
-                echo "证书安装失败，请检查输入。"
+                if mkdir -p "$install_path" && \
+                    ~/.acme.sh/acme.sh --installcert -d "$domain" \
+                    --key-file "$install_path/private.key" --fullchain-file "$install_path/fullchain.crt" && \
+                    sudo chmod 644 "$install_path/fullchain.crt" "$install_path/private.key"; then
+                   echo -e "\e[32m证书安装完成！路径: $install_path\e[0m"
+                   else
+                   echo -e "\e[1;31m证书安装失败，请检查输入。\e[0m"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             5)
-                ~/.acme.sh/acme.sh --uninstall
-                echo -e "\e[32macme.sh 已卸载。\e[0m"
+                if ~/.acme.sh/acme.sh --uninstall; then
+                    echo -e "\e[32macme.sh 已卸载。\e[0m"
+                else
+                    echo -e "\e[1;31macme.sh 卸载失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -546,7 +620,7 @@ apply_certificate() {
                 return
                 ;;            
             *)
-                echo "无效选项，请重新输入。"
+                echo -e "\e[1;31m无效选项，请重新输入。\e[0m"
                 ;;
         esac
     done
@@ -568,7 +642,7 @@ install_xray() {
             "") 
                 return
                 ;;            
-            *) echo "无效选项，请重新输入。" ;;
+            *) echo -e "\e[1;31m无效选项，请重新输入。\e[0m" ;;
         esac
     done
 }
@@ -587,16 +661,19 @@ install_xray_tls() {
         read -p "请输入数字 [1-4] 选择功能 (直接回车退出)：" xray_choice
         case "$xray_choice" in
             1)
-                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
-                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc" && \
+               if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
+                   sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc"; then
                 echo -e "\e[32mXray 安装/升级完成！\e[0m"
                 echo "以下是uuid："
-                echo -e "\e[31m$(xray uuid)\e[0m"
+                echo -e "\e[32m$(xray uuid)\e[0m"
+                else
+                echo -e "\e[1;31mXray 安装/升级失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
-                echo -e "\e[33m提示：将UUID填入以下文件中。\e[0m"
+                echo -e "\e[33m提示：将UUID填入配置文件中。若已执行成功默认设置的“安装证书”则证书路径无须修改。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."                
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
@@ -626,7 +703,7 @@ install_xray_tls() {
                     sudo systemctl restart xray
                     sleep 2
                     if ! systemctl is-active --quiet xray; then
-                        echo "未能启动 xray 服务，请检查日志。"
+                        echo -e "\e[1;31m未能启动 xray 服务，请检查日志。\e[0m"
                         systemctl status xray --no-pager
                         break
                     else
@@ -638,7 +715,7 @@ install_xray_tls() {
                 TLS=$(extract_field "security" "\"[^\"]*\"")
                 CERT_PATH=$(extract_list_field "certificates" "certificateFile")
                 if [[ -z "$CERT_PATH" ]]; then
-                    echo "未能找到证书路径。"
+                    echo -e "\e[1;31m未能找到证书路径。\e[0m"
                     break
                 fi
                 DOMAIN=$(get_domain_from_cert "$CERT_PATH")
@@ -650,15 +727,18 @@ install_xray_tls() {
                 PORT=${PORT:-"443"}
                 vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
                 echo "VLESS链接如下"
-                echo -e "\e[93m$vless_uri\e[0m"
+                echo -e "\e[32m$vless_uri\e[0m"
                 break
                 done
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             4)
-                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
+                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge; then
                 echo -e "\e[32mXray已卸载。\e[0m"
+                else
+                echo -e "\e[1;31mXray卸载失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -666,7 +746,7 @@ install_xray_tls() {
                 return
                 ;;            
             *)
-                echo "无效选项，请重新输入。"
+                echo -e "\e[1;31m无效选项，请重新输入。\e[0m"
                 ;;
         esac
     done
@@ -686,23 +766,26 @@ install_xray_reality() {
         read -p "请输入数字 [1-4] 选择(直接回车退出)：" xray_choice
         case "$xray_choice" in
             1)
-                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
-                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-XTLS-Vision-REALITY/config_server.jsonc" && \
+               if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
+                  sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-XTLS-Vision-REALITY/config_server.jsonc"; then
                 echo -e "\e[32mXray 安装/升级完成！\e[0m"
                 echo "以下是UUID："
-                echo -e "\e[31m$(xray uuid)\e[0m"
+                echo -e "\e[32m$(xray uuid)\e[0m"
                 echo "以下是私钥："
                 keys=$(xray x25519)
                 export PRIVATE_KEY=$(echo "$keys" | head -n 1 | awk '{print $3}' | sed 's/^-//')
                 export PUBLIC_KEY=$(echo "$keys" | tail -n 1 | awk '{print $3}' | sed 's/^-//')
-                echo -e "\e[93m$PRIVATE_KEY\e[0m"                
+                echo -e "\e[32m$PRIVATE_KEY\e[0m"                
                 echo "以下是ShortIds："                
-                echo -e "\e[34m$(openssl rand -hex 8)\e[0m"
+                echo -e "\e[32m$(openssl rand -hex 8)\e[0m"
+                else
+                echo -e "\e[1;31mXray 安装/升级失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
-                echo -e "\e[33m提示：将UUID、目标网站及私钥填入以下文件中，ShortIds非必须。\e[0m"
+                echo -e "\e[33m提示：将UUID、目标网站及私钥填入配置文件中，ShortIds非必须。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."                                
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
@@ -743,9 +826,9 @@ install_xray_reality() {
                     sudo systemctl restart xray
                     sleep 2
                     if ! systemctl is-active --quiet xray; then
-                        echo "未能启动 xray 服务，请检查日志。"
-                        systemctl status xray --no-pager
-                        break
+                       echo -e "\e[1;31m未能启动 xray 服务，请检查日志。\e[0m"
+                       systemctl status xray --no-pager
+                       break
                     else
                         echo -e "\e[32mxray已启动！\e[0m"
                     fi
@@ -763,7 +846,7 @@ install_xray_reality() {
                 echo "VLESS链接如下："
                 echo -e "\e[32m$vless_uri\e[0m"
                 echo "以下是公钥："
-                echo -e "\e[93m$PUBLIC_KEY\e[0m"                
+                echo -e "\e[32m$PUBLIC_KEY\e[0m"
                 echo -e "\e[33m提示：将公钥填入客户端中。\e[0m"
                 break
                 done
@@ -771,8 +854,11 @@ install_xray_reality() {
                 echo
                 ;;
             4)
-                bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
+                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge; then
                 echo -e "\e[32mXray已卸载。\e[0m"
+                else
+                echo -e "\e[1;31mXray卸载失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -780,7 +866,7 @@ install_xray_reality() {
                 return
                 ;;            
             *)
-                echo "无效选项，请重新输入。"
+                echo -e "\e[1;31m无效选项，请重新输入。\e[0m"
                 ;;
         esac
     done
@@ -801,16 +887,19 @@ install_hysteria2() {
         read -p "请输入数字 [1-5] 选择 (直接回车退出)：" hysteria_choice
         case "$hysteria_choice" in
             1)
-                bash <(curl -fsSL https://get.hy2.sh/) && \
-                sudo systemctl enable --now hysteria-server.service && \
-                sysctl -w net.core.rmem_max=16777216
-                sysctl -w net.core.wmem_max=16777216
+                if bash <(curl -fsSL https://get.hy2.sh/) && \
+                   sudo systemctl enable --now hysteria-server.service && \
+                   sysctl -w net.core.rmem_max=16777216 && \
+                   sysctl -w net.core.wmem_max=16777216; then
                 echo -e "\e[32mhysteria2 安装/升级完成！\e[0m"
+                else
+                echo -e "\e[1;31mhysteria2 安装/升级失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
-                echo -e "\e[33m提示：将域名填入以下文件中。\e[0m"
+                echo -e "\e[33m提示：将域名填入配置文件中。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."                                                
                 sudo nano /etc/hysteria/config.yaml
                 read -n 1 -s -r -p "按任意键返回..."
@@ -824,14 +913,14 @@ install_hysteria2() {
                     openssl x509 -in "$cert_file" -text -noout | grep -Po "CN=[^ ]*" | sed 's/CN=//'
 }
                 if [ ! -f "$config_file" ]; then
-                    echo "未能找到配置文件。"
+                    echo -e "\e[1;31m未能找到配置文件。\e[0m"
                     break
                 fi
                 while true; do
                     sudo systemctl restart hysteria-server.service
                     sleep 2
                     if ! systemctl is-active --quiet hysteria-server.service; then
-                        echo "未能启动 hysteria 服务，请检查日志。"
+                        echo -e "\e[1;31m未能启动 hysteria 服务，请检查日志。\e[0m"
                         sudo systemctl status hysteria-server.service --no-pager
                         break
                     else
@@ -843,12 +932,12 @@ install_hysteria2() {
                 if [ -z "$domain" ]; then
                     cert_path=$(grep "cert:" "$config_file" | awk '{print $2}' | tr -d '"')
                     if [ -z "$cert_path" ] || [ ! -f "$cert_path" ]; then
-                        echo "没有找到域名或证书。"
+                        echo -e "\e[1;31m没有找到域名或证书。\e[0m"
                         break
                     fi
                     domain=$(get_domain_from_cert "$cert_path")
                     if [ -z "$domain" ]; then
-                        echo "从证书中提取域名失败。"
+                        echo -e "\e[1;31m从证书中提取域名失败。\e[0m"
                         break
                     fi
                 fi
@@ -873,31 +962,34 @@ install_hysteria2() {
                 [[ -z "$redirect_port" || ! "$redirect_port" =~ ^[0-9]+$ || "$redirect_port" -lt 1 || "$redirect_port" -gt 65535 ]] && redirect_port="$default_redirect_port"
                 read -p "请输入起始端口号 (按 Enter 使用默认值 60000): " start_port
                 [[ -z "$start_port" ]] && start_port="$default_start_port"
-                [[ "$start_port" =~ ^[0-9]+$ && "$start_port" -ge 1 && "$start_port" -le 65535 ]] || { echo "起始端口号无效, 使用默认值 60000"; start_port="$default_start_port"; }
+                [[ "$start_port" =~ ^[0-9]+$ && "$start_port" -ge 1 && "$start_port" -le 65535 ]] || { echo -e "\e[1;31m起始端口号无效, 使用默认值 60000\e[0m"; start_port="$default_start_port"; }
                 read -p "请输入结束端口号 (按 Enter 使用默认值 65535): " end_port
                 [[ -z "$end_port" ]] && end_port="$default_end_port"
-                [[ "$end_port" =~ ^[0-9]+$ && "$end_port" -ge 1 && "$end_port" -le 65535 && "$end_port" -ge "$start_port" ]] || { echo "结束端口号无效，使用默认值 65535"; end_port="$default_end_port"; }
+                [[ "$end_port" =~ ^[0-9]+$ && "$end_port" -ge 1 && "$end_port" -le 65535 && "$end_port" -ge "$start_port" ]] || { echo -e "\e[1;31m结束端口号无效，使用默认值 65535\e[0m"; end_port="$default_end_port"; }
                 interfaces=($(ip -o link | awk -F': ' '{if ($2 != "lo") print $2}'))
-                [[ ${#interfaces[@]} -eq 0 ]] && { echo "未找到网络接口，无法执行 iptables 命令。"; exit 1; }
+                [[ ${#interfaces[@]} -eq 0 ]] && { echo -e "\e[1;31m未找到网络接口，无法执行 iptables 命令。\e[0m"; exit 1; }
                 selected_interface="${interfaces[0]}"
                 iptables_command="iptables -t nat -A PREROUTING -i $selected_interface -p udp --dport $start_port:$end_port -j REDIRECT --to-ports $redirect_port"
                 if eval "$iptables_command"; then
                 echo -e "\e[32m端口跳跃设置成功!\e[0m"
                 else
-                echo "iptables命令执行失败。"
+                echo -e "\e[1;31miptables命令执行失败。\e[0m"
                 exit 1
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             5)
-                bash <(curl -fsSL https://get.hy2.sh/) --remove && \
-                rm -rf /etc/hysteria
-                userdel -r hysteria
-                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server.service
-                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service
-                systemctl daemon-reload                
+               if bash <(curl -fsSL https://get.hy2.sh/) --remove && \
+                rm -rf /etc/hysteria &&
+                userdel -r hysteria &&
+                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server.service &&
+                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service &&
+                systemctl daemon-reload; then
                 echo -e "\e[32mhysteria2 已卸载。\e[0m"
+                else
+                echo -e "\e[1;31mhysteria2 卸载失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -905,7 +997,7 @@ install_hysteria2() {
                 return
                 ;;            
             *)
-                echo "无效选项，请重新输入。"
+                echo -e "\e[1;31m无效选项，请重新输入。\e[0m"
                 ;;
         esac
     done
@@ -925,29 +1017,41 @@ install_1panel() {
         read -p "请输入数字 [1-4] 选择 (直接回车退出)：" panel_choice
         case "$panel_choice" in
             1)
-                curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
-                echo -e "\e[32m1Panel 安装完成！\e[0m"
+                if curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh; then
+                    echo -e "\e[32m1Panel 安装完成！\e[0m"
+                else
+                     echo -e "\e[1;31m1Panel 安装失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             2)
-                sudo apt install ufw
-                echo -e "\e[32mufw 安装完成！\e[0m"
+                if sudo apt install ufw; then
+                     echo -e "\e[32mufw 安装完成！\e[0m"
+                else
+                    echo -e "\e[1;31mufw 安装失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             3)
-                sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y
-                echo -e "\e[32mufw 卸载完成。\e[0m"
+                if sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y; then
+                    echo -e "\e[32mufw 卸载完成。\e[0m"
+                else
+                    echo -e "\e[1;31mufw 卸载失败！\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
             4)
-                sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d
-                sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
+                if sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d &&
+                   sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
                     sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
-                    sudo groupdel docker
-                echo -e "\e[32m1Panel 卸载完成。\e[0m"
+                    sudo groupdel docker; then
+                    echo -e "\e[32m1Panel 卸载完成。\e[0m"
+                else
+                    echo -e "\e[1;31m1Panel 卸载失败。\e[0m"
+                fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -955,7 +1059,7 @@ install_1panel() {
                 return
                 ;;            
             *)
-                echo "无效选项，请重新输入。"
+                echo -e "\e[1;31m无效选项，请重新输入。\e[0m"
                 ;;
         esac
     done    
@@ -982,7 +1086,7 @@ while true; do
         7) install_hysteria2 ;;
         8) install_1panel ;;
         *)
-            echo "无效选项，请输入数字 1-7 或直接回车退出！"
+            echo -e "\e[1;31m无效选项，请输入数字 1-7 或直接回车退出！\e[0m"
             ;;
     esac
 done
