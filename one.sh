@@ -9,7 +9,7 @@
 display_main_menu() {
     clear
     echo "========================================="
-    echo -e "               \e[96mVPS管理脚本\e[0m"
+    echo -e "               \e[1;96mVPS管理脚本\e[0m"
     echo "========================================="
     echo "1) 系统信息"
     echo "2) 系统优化"
@@ -24,23 +24,23 @@ display_main_menu() {
 
 # 系统信息
 view_vps_info() {
-    echo -e "\e[34m主机名:\e[0m \e[32m$(hostname)\e[0m"
-    echo -e "\e[34m系统版本:\e[0m \e[32m$(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d '"' -f2)\e[0m"
-    echo -e "\e[34mLinux版本:\e[0m \e[32m$(uname -r)\e[0m"
+    echo -e "\e[1;34m主机名:\e[0m \e[32m$(hostname)\e[0m"
+    echo -e "\e[1;34m系统版本:\e[0m \e[32m$(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d '"' -f2)\e[0m"
+    echo -e "\e[1;34mLinux版本:\e[0m \e[32m$(uname -r)\e[0m"
     echo "-------------"
-    echo -e "\e[34mCPU架构:\e[0m \e[32m$(uname -m)\e[0m"
-    echo -e "\e[34mCPU型号:\e[0m \e[32m$(lscpu | grep 'Model name' | sed 's/Model name:[ \t]*//')\e[0m"
-    echo -e "\e[34mCPU核心数:\e[0m \e[32m$(nproc)\e[0m"
-    echo -e "\e[34mCPU频率:\e[0m \e[32m$(lscpu | grep 'CPU MHz' | awk -F: '{print $2}' | xargs) MHz\e[0m"
+    echo -e "\e[1;34mCPU架构:\e[0m \e[32m$(uname -m)\e[0m"
+    echo -e "\e[1;34mCPU型号:\e[0m \e[32m$(lscpu | grep 'Model name' | sed 's/Model name:[ \t]*//')\e[0m"
+    echo -e "\e[1;34mCPU核心数:\e[0m \e[32m$(nproc)\e[0m"
+    echo -e "\e[1;34mCPU频率:\e[0m \e[32m$(lscpu | grep 'CPU MHz' | awk -F: '{print $2}' | xargs) MHz\e[0m"
     echo "-------------"
-    echo -e "\e[34mCPU占用:\e[0m \e[32m$(top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}')%\e[0m"
-    echo -e "\e[34m系统负载:\e[0m \e[32m$(uptime | awk -F'load average:' '{print $2}' | sed 's/ //g')\e[0m"
-    local mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else printf "\e[31m数据不可用\e[0m"}')
-    echo -e "\e[34m物理内存:\e[0m \e[32m$mem_info \e[0m"
-    local swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else printf "\e[31m数据不可用\e[0m" }')
-    echo -e "\e[34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
+    echo -e "\e[1;34mCPU占用:\e[0m \e[32m$(top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}')%\e[0m"
+    echo -e "\e[1;34m系统负载:\e[0m \e[32m$(uptime | awk -F'load average:' '{print $2}' | sed 's/ //g')\e[0m"
+    local mem_info=$(free -m | awk '/Mem:/ {total=$2; used=$3; if (total > 0) printf "%.2f/%.2f MB (%.2f%%)", used, total, used*100/total; else print "数据不可用"}')
+    echo -e "\e[1;34m物理内存:\e[0m \e[32m$mem_info \e[0m"
+    local swap_info=$(free -m | awk '/Swap:/ {total=$2; used=$3; if (total > 0) printf "%.0fMB/%.0fMB (%.0f%%)", used, total, used*100/total; else print "数据不可用" }')
+    echo -e "\e[1;34m虚拟内存:\e[0m \e[32m$swap_info\e[0m"
      
-    echo -e "\e[34m硬盘占用:\e[0m \e[32m$(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')\e[0m"
+    echo -e "\e[1;34m硬盘占用:\e[0m \e[32m$(df -h / | awk '/\// {print $3 "/" $2 " (" $5 ")"}')\e[0m"
     echo "-------------"
     local NET_INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2}' | head -n 1)
     if [ -n "$NET_INTERFACE" ]; then
@@ -48,22 +48,22 @@ view_vps_info() {
         local TX_BYTES=$(cat /sys/class/net/$NET_INTERFACE/statistics/tx_bytes)
         local RX_MB=$(awk "BEGIN {printf \"%.2f\", $RX_BYTES / 1024 / 1024}")
         local TX_MB=$(awk "BEGIN {printf \"%.2f\", $TX_BYTES / 1024 / 1024}")
-        echo -e "\e[34m网络接口:\e[0m \e[32m$NET_INTERFACE\e[0m"
-        echo -e "\e[34m总接收:\e[0m \e[32m${RX_MB} MB\e[0m"
-        echo -e "\e[34m总发送:\e[0m \e[32m${TX_MB} MB\e[0m"
+        echo -e "\e[1;34m网络接口:\e[0m \e[32m$NET_INTERFACE\e[0m"
+        echo -e "\e[1;34m总接收:\e[0m \e[32m${RX_MB} MB\e[0m"
+        echo -e "\e[1;34m总发送:\e[0m \e[32m${TX_MB} MB\e[0m"
     else
         echo -e "\e[31m未检测到有效的网络接口！\e[0m"
     fi
     echo "-------------"
-    echo -e "\e[34m网络算法:\e[0m \e[32m$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')\e[0m"
+    echo -e "\e[1;34m网络算法:\e[0m \e[32m$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')\e[0m"
     echo "-------------"
-    echo -e "\e[34m运营商:\e[0m \e[32m$(curl -s ipinfo.io/org | sed 's/^ *//;s/ *$//')\e[0m"
-    echo -e "\e[34mIPv4地址:\e[0m \e[32m$(curl -s ipv4.icanhazip.com)\e[0m"
-    echo -e "\e[34mDNS地址:\e[0m \e[32m$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs | sed 's/ /, /g')\e[0m"
-    echo -e "\e[34m地理位置:\e[0m \e[32m$(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)\e[0m"
-    echo -e "\e[34m系统时间:\e[0m \e[32m$(timedatectl | grep 'Local time' | awk '{print $3, $4, $5}')\e[0m"
+    echo -e "\e[1;34m运营商:\e[0m \e[32m$(curl -s ipinfo.io/org | sed 's/^ *//;s/ *$//')\e[0m"
+    echo -e "\e[1;34mIPv4地址:\e[0m \e[32m$(curl -s ipv4.icanhazip.com)\e[0m"
+    echo -e "\e[1;34mDNS地址:\e[0m \e[32m$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs | sed 's/ /, /g')\e[0m"
+    echo -e "\e[1;34m地理位置:\e[0m \e[32m$(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)\e[0m"
+    echo -e "\e[1;34m系统时间:\e[0m \e[32m$(timedatectl | grep 'Local time' | awk '{print $3, $4, $5}')\e[0m"
     echo "-------------"
-    echo -e "\e[34m运行时长:\e[0m \e[32m$(uptime -p | sed 's/up //')\e[0m"
+    echo -e "\e[1;34m运行时长:\e[0m \e[32m$(uptime -p | sed 's/up //')\e[0m"
     echo "-------------"
     read -n 1 -s -r -p "按任意键返回..."
 }
@@ -72,7 +72,7 @@ view_vps_info() {
 display_system_optimization_menu() {
     while true; do
         echo "========================================="
-    echo -e "               \e[32m系统优化\e[0m       "
+    echo -e "               \e[1;32m系统优化\e[0m       "
         echo "========================================="
         echo "1) 校准时间"
         echo "2) 更新系统"
@@ -152,7 +152,7 @@ enable_bbr() {
 root_login() {
     while true; do
         echo "========================================="
-        echo -e "               \e[34mROOT登录\e[0m   "
+        echo -e "               \e[1;34mROOT登录\e[0m   "
         echo "========================================="
         echo "1) 设置密码"
         echo "2) 编辑配置"
@@ -193,7 +193,7 @@ root_login() {
 common_tools() {
     while true; do
         echo "========================================="
-        echo -e "               \e[32m常用工具\e[0m "
+        echo -e "               \e[1;32m常用工具\e[0m "
         echo "========================================="
         echo "1) 查找文件"
         echo "2) 赋予权限"        
@@ -385,7 +385,7 @@ common_tools() {
 install_package() {
     while true; do
         echo "========================================="
-        echo -e "               \e[32m常用软件包\e[0m   "
+        echo -e "               \e[1;32m常用软件包\e[0m   "
         echo "========================================="
         echo "1) apt"
         echo "2) curl"
@@ -532,7 +532,7 @@ install_package() {
 apply_certificate() {
     while true; do
         echo "========================================="
-        echo -e "               \e[32m申请证书\e[0m     "
+        echo -e "               \e[1;32m申请证书\e[0m     "
         echo "========================================="
         echo "1) 安装脚本"
         echo "2) 申请证书"
@@ -630,7 +630,7 @@ apply_certificate() {
 install_xray() {
     while true; do
         echo "========================================="
-    echo -e "               \e[32m安装Xray\e[0m       "
+    echo -e "               \e[1;32m安装Xray\e[0m       "
         echo "========================================="
         echo "1) VLESS-WS-TLS"
         echo "2) VLESS-TCP-REALITY"
@@ -651,7 +651,7 @@ install_xray() {
 install_xray_tls() {
     while true; do
         echo "========================================="
-        echo -e "               \e[34mVLESS-WS-TLS\e[0m   "
+        echo -e "               \e[1;34mVLESS-WS-TLS\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置"
@@ -756,7 +756,7 @@ install_xray_tls() {
 install_xray_reality() {
     while true; do
         echo "========================================="
-        echo -e "               \e[34mVLESS-TCP-REALITY\e[0m   "
+        echo -e "               \e[1;34mVLESS-TCP-REALITY\e[0m   "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置"
@@ -876,7 +876,7 @@ install_xray_reality() {
 install_hysteria2() {
     while true; do    
         echo "========================================="
-        echo -e "           \e[32m安装Hysteria2\e[0m  "
+        echo -e "           \e[1;32m安装Hysteria2\e[0m  "
         echo "========================================="
         echo "1) 安装/升级"
         echo "2) 编辑配置"
@@ -1007,7 +1007,7 @@ install_hysteria2() {
 install_1panel() {
     while true; do
         echo "========================================="
-        echo -e "               \e[32m安装1Panel\e[0m "
+        echo -e "               \e[1;32m安装1Panel\e[0m "
         echo "========================================="
         echo "1) 安装面板"
         echo "2) 安装防火墙"
