@@ -702,7 +702,12 @@ install_xray_tls() {
                     openssl x509 -in "$cert_file" -text -noout | grep -aPo "CN=[^ ]*" | sed 's/CN=//'
 }
                 get_public_ip() {
-                    curl -s https://api.ipify.org || echo "127.0.0.1"
+                    ipv4=$(curl -s https://api.ipify.org)
+                    if [[ -n "$ipv4" ]]; then
+                    echo "$ipv4"
+                    else
+                    curl -s -6 https://api64.ipify.org || echo "127.0.0.1"
+                    fi
 }
                 while true; do
                     sudo systemctl restart xray
@@ -825,7 +830,12 @@ install_xray_reality() {
                     fi
 }
                 get_public_ip() {
-                    curl -s https://api.ipify.org || echo "127.0.0.1"
+                    ipv4=$(curl -s https://api.ipify.org)
+                    if [[ -n "$ipv4" ]]; then
+                    echo "$ipv4"
+                    else
+                    curl -s -6 https://api64.ipify.org || echo "127.0.0.1"
+                    fi
 }
                 while true; do
                     sudo systemctl restart xray
@@ -992,8 +1002,6 @@ install_hysteria2() {
                 rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service &&
                 systemctl daemon-reload; then
                 echo -e "\e[32mhysteria2 已卸载。\e[0m"
-                else
-                echo -e "\e[31mhysteria2 卸载失败！\e[0m"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -1050,12 +1058,10 @@ install_1panel() {
                 ;;
             4)
                 if sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d &&
-                   sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
+                    sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
                     sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
                     sudo groupdel docker; then
                 echo -e "\e[32m1Panel 卸载完成。\e[0m"
-                else
-                echo -e "\e[31m1Panel 卸载失败。\e[0m"
                 fi
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
