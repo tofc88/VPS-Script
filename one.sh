@@ -85,7 +85,7 @@ display_system_optimization_menu() {
         echo "4) 开启BBR"
         echo "5) ROOT登录"
         echo "========================================="
-        read -p "请输入数字 [1-5] 选择 (直接回车退出)：" root_choice
+        read -p "请输入数字 [1-5] 选择 (默认回车退出)：" root_choice
         case "$root_choice" in
             1) calibrate_time ;;
             2) update_system ;;
@@ -163,7 +163,7 @@ root_login() {
         echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "========================================="
-        read -p "请输入数字 [1-3] 选择 (直接回车退出)：" root_choice
+        read -p "请输入数字 [1-3] 选择 (默认回车退出)：" root_choice
         case "$root_choice" in
             1) 
                 sudo passwd root
@@ -208,7 +208,7 @@ common_tools() {
         echo "6) 查看端口"
         echo "7) 开放端口"
         echo "========================================="
-        read -p "请输入数字 [1-7] 选择 (直接回车退出)：" root_choice
+        read -p "请输入数字 [1-7] 选择 (默认回车退出)：" root_choice
         case "$root_choice" in
             1)
                 read -p "请输入要查找的文件名: " filename
@@ -240,7 +240,7 @@ common_tools() {
             
             3)
                 while true; do
-                    read -p "请输入要删除的文件或目录名（默认退出）: " filename
+                    read -p "请输入要删除的文件或目录名（默认回车退出）: " filename
                     if [[ -z "$filename" ]]; then
                         break
                     fi
@@ -399,7 +399,7 @@ install_package() {
         echo "5) git"
         echo "6) docker"
         echo "========================================="
-        read -p "请输入数字 [1-6] 选择 (直接回车退出)：" opt_choice
+        read -p "请输入数字 [1-6] 选择 (默认回车退出)：" opt_choice
         case "$opt_choice" in
             1)  
                 if sudo apt update; then
@@ -413,7 +413,7 @@ install_package() {
             2)
                 echo "1) 安装"
                 echo "2) 卸载"
-                read -p "请选择操作 (直接回车退出)：" action
+                read -p "请选择操作 (默认回车退出)：" action
                 case "$action" in
                     1) if sudo apt install -y curl; then
                            echo -e "\e[32mcurl 安装完成！\e[0m"
@@ -436,7 +436,7 @@ install_package() {
             3)
                 echo "1) 安装"
                 echo "2) 卸载"
-                read -p "请选择操作 (直接回车退出)：" action
+                read -p "请选择操作 (默认回车退出)：" action
                 case "$action" in
                     1) if sudo apt install -y nano; then
                             echo -e "\e[32mnano 安装完成！\e[0m"
@@ -459,7 +459,7 @@ install_package() {
             4)
                 echo "1) 安装"
                 echo "2) 卸载"
-                read -p "请选择操作 (直接回车退出)：" action
+                read -p "请选择操作 (默认回车退出)：" action
                 case "$action" in
                     1) if sudo apt install -y htop; then
                             echo -e "\e[32mhtop 安装完成！\e[0m"
@@ -482,7 +482,7 @@ install_package() {
             5)
                 echo "1) 安装"
                 echo "2) 卸载"
-                read -p "请选择操作 (直接回车退出)：" action
+                read -p "请选择操作 (默认回车退出)：" action
                 case "$action" in
                     1) if sudo apt install -y git; then
                             echo -e "\e[32mgit 安装完成！\e[0m"
@@ -505,7 +505,7 @@ install_package() {
             6)
                 echo "1) 安装"
                 echo "2) 卸载"
-                read -p "请选择操作 (直接回车退出)：" action
+                read -p "请选择操作 (默认回车退出)：" action
                 case "$action" in
                     1) if sudo apt install -y docker; then
                             echo -e "\e[32mdocker 安装完成！\e[0m"
@@ -545,7 +545,7 @@ apply_certificate() {
         echo "4) 安装证书"
         echo "5) 卸载脚本"
         echo "========================================="
-        read -p "请输入数字 [1-5] 选择 (直接回车退出)：" cert_choice
+        read -p "请输入数字 [1-5] 选择 (默认回车退出)：" cert_choice
         case "$cert_choice" in
             1)
                 read -p "请输入邮箱地址: " email
@@ -640,7 +640,7 @@ install_xray() {
         echo "1) VLESS-WS-TLS"
         echo "2) VLESS-TCP-REALITY"
         echo "========================================="
-        read -p "请输入数字 [1-2] 选择 (直接回车退出)：" opt_choice
+        read -p "请输入数字 [1-2] 选择 (默认回车退出)：" opt_choice
         case "$opt_choice" in
             1) install_xray_tls ;;
             2) install_xray_reality ;;
@@ -663,7 +663,7 @@ install_xray_tls() {
         echo "3) 重启服务"
         echo "4) 卸载服务"
         echo "========================================="
-        read -p "请输入数字 [1-4] 选择功能 (直接回车退出)：" xray_choice
+        read -p "请输入数字 [1-4] 选择功能 (默认回车退出)：" xray_choice
         case "$xray_choice" in
             1)
                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
@@ -773,7 +773,7 @@ install_xray_reality() {
         echo "3) 重启服务"
         echo "4) 卸载服务"
         echo "========================================="
-        read -p "请输入数字 [1-4] 选择(直接回车退出)：" xray_choice
+        read -p "请输入数字 [1-4] 选择(默认回车退出)：" xray_choice
         case "$xray_choice" in
             1)
                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
@@ -899,7 +899,7 @@ install_hysteria2() {
         echo "4) 端口跳跃"
         echo "5) 卸载服务"
         echo "========================================="
-        read -p "请输入数字 [1-5] 选择 (直接回车退出)：" hysteria_choice
+        read -p "请输入数字 [1-5] 选择 (默认回车退出)：" hysteria_choice
         case "$hysteria_choice" in
             1)
                 if bash <(curl -fsSL https://get.hy2.sh/) && \
@@ -1027,7 +1027,7 @@ install_1panel() {
         echo "3) 卸载防火墙"
         echo "4) 卸载面板"
         echo "========================================="
-        read -p "请输入数字 [1-4] 选择 (直接回车退出)：" panel_choice
+        read -p "请输入数字 [1-4] 选择 (默认回车退出)：" panel_choice
         case "$panel_choice" in
             1)
                 if curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh; then
@@ -1082,7 +1082,7 @@ install_1panel() {
 
 while true; do
     display_main_menu
-    read -p "请输入数字 [1-7] 选择(直接回车退出)：" choice
+    read -p "请输入数字 [1-7] 选择(默认回车退出)：" choice
     if [[ -z "$choice" ]]; then
       echo -e "\e[32m退出脚本，感谢使用！\e[0m"
       exit 0
