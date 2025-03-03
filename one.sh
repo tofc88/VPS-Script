@@ -1022,10 +1022,10 @@ install_1panel() {
         echo -e "               \e[1;32m安装1Panel\e[0m "
         echo "========================================="
         echo "1) 安装面板"
-        echo "1) 查看信息"
-        echo "2) 安装防火墙"
-        echo "3) 卸载防火墙"
-        echo "4) 卸载面板"
+        echo "2) 查看信息"
+        echo "3) 安装防火墙"
+        echo "4) 卸载防火墙"
+        echo "5) 卸载面板"
         echo "========================================="
         read -p "请输入数字 [1-5] 选择 (默认回车退出)：" panel_choice
         case "$panel_choice" in
