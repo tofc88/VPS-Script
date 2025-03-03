@@ -171,9 +171,8 @@ root_login() {
                 echo
                 ;;
             2) 
-                echo -e "\e[33m提示：将以下内容中PermitRootLogin与PasswordAuthentication的值改为yes。\e[0m"
-                read -n 1 -s -r -p "按任意键继续..."
-                sudo nano /etc/ssh/sshd_config 
+                sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config;
+                sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config;
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
@@ -1023,11 +1022,12 @@ install_1panel() {
         echo -e "               \e[1;32m安装1Panel\e[0m "
         echo "========================================="
         echo "1) 安装面板"
+        echo "1) 查看信息"
         echo "2) 安装防火墙"
         echo "3) 卸载防火墙"
         echo "4) 卸载面板"
         echo "========================================="
-        read -p "请输入数字 [1-4] 选择 (默认回车退出)：" panel_choice
+        read -p "请输入数字 [1-5] 选择 (默认回车退出)：" panel_choice
         case "$panel_choice" in
             1)
                 if curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh; then
@@ -1039,6 +1039,11 @@ install_1panel() {
                 echo
                 ;;
             2)
+                1pctl user-info
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            3)
                 if sudo apt install ufw; then
                 echo -e "\e[32mufw 安装完成！\e[0m"
                 else
@@ -1047,7 +1052,7 @@ install_1panel() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
-            3)
+            4)
                 if sudo apt remove -y ufw && sudo apt purge -y ufw && sudo apt autoremove -y; then
                 echo -e "\e[32mufw 卸载完成。\e[0m"
                 else
@@ -1056,7 +1061,7 @@ install_1panel() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
-            4)
+            5)
                 if sudo systemctl stop 1panel && sudo 1pctl uninstall && sudo rm -rf /var/lib/1panel /etc/1panel /usr/local/bin/1pctl && sudo journalctl --vacuum-time=3d &&
                     sudo systemctl stop docker && sudo apt-get purge -y docker-ce docker-ce-cli containerd.io && \
                     sudo find / \( -name "1panel*" -or -name "docker*" -or -name "containerd*" -or -name "compose*" \) -exec rm -rf {} + && \
