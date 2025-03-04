@@ -779,14 +779,14 @@ install_xray_reality() {
                   sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-XTLS-Vision-REALITY/config_server.jsonc"; then
                 echo -e "\e[32mXray 安装/升级完成！\e[0m"
                 echo "以下是UUID："
-                echo -e "\e[35m$(xray uuid)\e[0m"
+                echo -e "\e[34m$(xray uuid)\e[0m"
                 echo "以下是私钥："
                 keys=$(xray x25519)
                 export PRIVATE_KEY=$(echo "$keys" | head -n 1 | awk '{print $3}' | sed 's/^-//')
                 export PUBLIC_KEY=$(echo "$keys" | tail -n 1 | awk '{print $3}' | sed 's/^-//')
-                echo -e "\e[35m$PRIVATE_KEY\e[0m"                
+                echo -e "\e[34m$PRIVATE_KEY\e[0m"                
                 echo "以下是ShortIds："                
-                echo -e "\e[35m$(openssl rand -hex 8)\e[0m"
+                echo -e "\e[34m$(openssl rand -hex 8)\e[0m"
                 else
                 echo -e "\e[31mXray 安装/升级失败！\e[0m"
                 fi
@@ -860,7 +860,7 @@ install_xray_reality() {
                 echo "VLESS链接如下："
                 echo -e "\e[32m$vless_uri\e[0m"
                 echo "以下是公钥："
-                echo -e "\e[35m$PUBLIC_KEY\e[0m"
+                echo -e "\e[34m$PUBLIC_KEY\e[0m"
                 echo -e "\e[33m提示：将公钥填入客户端中。\e[0m"
                 break
                 done
