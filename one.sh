@@ -669,7 +669,7 @@ install_xray_tls() {
                    sudo curl -o /usr/local/etc/xray/config.json "https://raw.githubusercontent.com/XTLS/Xray-examples/refs/heads/main/VLESS-TCP-TLS-WS%20(recommended)/config_server.jsonc"; then
                 echo -e "\e[32mXray 安装/升级完成！\e[0m"
                 echo "以下是uuid："
-                echo -e "\e[34m$(xray uuid)\e[0m"
+                echo -e "\e[32m$(xray uuid)\e[0m"
                 else
                 echo -e "\e[31mXray 安装/升级失败！\e[0m"
                 fi
