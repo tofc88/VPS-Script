@@ -736,7 +736,7 @@ install_xray_tls() {
                 PORT=${PORT:-"443"}
                 vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&security=${TLS}&sni=${SNI}&type=ws&host=${HOST}&path=${WS_PATH}#Xray"
                 echo "VLESS链接如下"
-                echo -e "\e[32m$vless_uri\e[0m"
+                echo -e "\e[34m$vless_uri\e[0m"
                 break
                 done
                 read -n 1 -s -r -p "按任意键返回..."
@@ -858,7 +858,7 @@ install_xray_reality() {
                 SID=${SHORT_IDS:-""}
                 vless_uri="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&flow=${FLOW}&security=reality&sni=${SNI}&fp=chrome&sid=${SID}&type=tcp&headerType=none#Xray"
                 echo "VLESS链接如下："
-                echo -e "\e[32m$vless_uri\e[0m"
+                echo -e "\e[34m$vless_uri\e[0m"
                 echo "以下是公钥："
                 echo -e "\e[34m$PUBLIC_KEY\e[0m"
                 echo -e "\e[33m提示：将公钥填入客户端中。\e[0m"
@@ -957,7 +957,7 @@ install_hysteria2() {
                 fi
                 hysteria2_uri="hysteria2://$password@$domain:$port?insecure=0#hysteria"
                 echo "hysteria2 链接如下："
-                echo -e "\e[32m$hysteria2_uri\e[0m"
+                echo -e "\e[34m$hysteria2_uri\e[0m"
                 break
                 done
                 read -n 1 -s -r -p "按任意键返回..."
