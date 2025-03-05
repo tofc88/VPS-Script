@@ -63,7 +63,7 @@ view_vps_info() {
     echo "-------------"
     echo -e "\e[1;34m运营商:\e[0m \e[32m$(curl -s ipinfo.io/org | sed 's/^ *//;s/ *$//')\e[0m"
     echo -e "\e[1;34mIPv4地址:\e[0m \e[32m$(curl -s ipv4.icanhazip.com)\e[0m"
-    echo -e "\e[1;34mIPv6地址:\e[0m $(ip -6 addr show scope global | grep -v temporary | grep -v tentative | grep inet6 | awk '{print $2}' | cut -d'/' -f1 | head -n 1 || echo -e "\e[31m未检测到全局IPv6地址\e[0m")"
+    echo -e "\e[1;34mIPv6地址:\e[0m \e[32m$(ip -6 addr show scope global | awk '/inet6/ && !/temporary|tentative/ {print $2}' | cut -d'/' -f1 | head -n1 | ( grep . || echo "未检测到全局IPv6地址" ))\e[0m"
     echo -e "\e[1;34mDNS地址:\e[0m \e[32m$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | xargs | sed 's/ /, /g')\e[0m"
     echo -e "\e[1;34m地理位置:\e[0m \e[32m$(curl -s ipinfo.io/city), $(curl -s ipinfo.io/country)\e[0m"
     echo -e "\e[1;34m系统时间:\e[0m \e[32m$(timedatectl | grep 'Local time' | awk '{print $3, $4, $5}')\e[0m"
