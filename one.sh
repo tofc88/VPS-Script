@@ -394,11 +394,12 @@ install_package() {
         echo "1) apt"
         echo "2) curl"
         echo "3) nano"
-        echo "4) htop"
-        echo "5) git"
-        echo "6) docker"
+        echo "4) vim"
+        echo "5) htop"
+        echo "6) git"
+        echo "7) docker"
         echo "========================================="
-        read -p "请输入数字 [1-6] 选择 (默认回车退出)：" opt_choice
+        read -p "请输入数字 [1-7] 选择 (默认回车退出)：" opt_choice
         case "$opt_choice" in
             1)  
                 if sudo apt update; then
@@ -460,6 +461,29 @@ install_package() {
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
                 case "$action" in
+                    1) if sudo apt install -y vim; then
+                            echo -e "\e[32mvim 安装完成！\e[0m"
+                        else
+                            echo -e "\e[31mvim 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2) if sudo apt remove -y vim; then
+                            echo -e "\e[32mvim 卸载完成！\e[0m"
+                        else
+                             echo -e "\e[31mvim 卸载失败！\e[0m"
+                        fi
+                        ;;
+                    "") ;;
+                    *) echo -e "\e[31m无效选项，请重新输入。\e[0m" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;
+            5)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (默认回车退出)：" action
+                case "$action" in
                     1) if sudo apt install -y htop; then
                             echo -e "\e[32mhtop 安装完成！\e[0m"
                         else
@@ -478,7 +502,7 @@ install_package() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
                 ;;
-            5)
+            6)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
@@ -501,7 +525,7 @@ install_package() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
                 ;;
-            6)
+            7)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
