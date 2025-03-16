@@ -746,7 +746,7 @@ install_xray_tls() {
         echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "========================================="
-        read -p "请输入数字 [1-4] 选择功能 (默认回车退出)：" xray_choice
+        read -p "请输入数字 [1-3] 选择功能 (默认回车退出)：" xray_choice
         case "$xray_choice" in
             1)
                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
@@ -843,7 +843,7 @@ install_xray_reality() {
         echo "2) 编辑配置"
         echo "3) 重启服务"
         echo "========================================="
-        read -p "请输入数字 [1-4] 选择(默认回车退出)：" xray_choice
+        read -p "请输入数字 [1-3] 选择(默认回车退出)：" xray_choice
         case "$xray_choice" in
             1)
                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install && \
