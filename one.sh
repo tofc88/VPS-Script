@@ -392,12 +392,14 @@ install_package() {
         echo -e "               \e[1;32m常用软件包\e[0m   "
         echo "========================================="
         echo "1) apt"
-        echo "2) curl"
-        echo "3) nano"
-        echo "4) vim"
-        echo "5) htop"
-        echo "6) git"
-        echo "7) docker"
+        echo "2) sudo"
+        echo "3) curl"
+        echo "4) nano"
+        echo "5) vim"
+        echo "6) zip"
+        echo "7) git"
+        echo "8) htop"        
+        echo "9) docker"
         echo "========================================="
         read -p "请输入数字 [1-7] 选择 (默认回车退出)：" opt_choice
         case "$opt_choice" in
@@ -411,6 +413,29 @@ install_package() {
                 echo
                 ;;
             2)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (默认回车退出)：" action
+                case "$action" in
+                    1) if apt install sudo -y; then
+                            echo -e "\e[32msudo 安装完成！\e[0m"
+                        else
+                            echo -e "\e[31msudo 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2) if sudo apt remove -y sudo; then
+                            echo -e "\e[32msudo 卸载完成！\e[0m"
+                        else
+                             echo -e "\e[31msudo 卸载失败！\e[0m"
+                        fi
+                        ;;
+                    "") ;;
+                    *) echo -e "\e[31m无效选项，请重新输入。\e[0m" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;                        
+            3)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
@@ -433,7 +458,7 @@ install_package() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
                 ;;
-            3)
+            4)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
@@ -456,7 +481,7 @@ install_package() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
                 ;;
-            4)
+            5)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
@@ -479,7 +504,53 @@ install_package() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
                 ;;
-            5)
+            6)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (默认回车退出)：" action
+                case "$action" in
+                    1) if sudo apt install -y zip; then
+                            echo -e "\e[32mzip 安装完成！\e[0m"
+                        else
+                            echo -e "\e[31mzip 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2) if sudo apt remove -y zip; then
+                            echo -e "\e[32mzip 卸载完成！\e[0m"
+                        else
+                             echo -e "\e[31mzip 卸载失败！\e[0m"
+                        fi
+                        ;;
+                    "") ;;
+                    *) echo -e "\e[31m无效选项，请重新输入。\e[0m" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;                
+            7)
+                echo "1) 安装"
+                echo "2) 卸载"
+                read -p "请选择操作 (默认回车退出)：" action
+                case "$action" in
+                    1) if sudo apt install -y git; then
+                            echo -e "\e[32mgit 安装完成！\e[0m"
+                        else
+                           echo -e "\e[31mgit 安装失败！\e[0m"
+                        fi
+                         ;;
+                    2)  if sudo apt remove -y git; then
+                            echo -e "\e[32mgit 卸载完成！\e[0m"
+                         else
+                            echo -e "\e[31mgit 卸载失败！\e[0m"
+                         fi
+                        ;;
+                    "") ;;
+                    *) echo -e "\e[31m无效选项，请重新输入。\e[0m" ;;
+                esac
+                read -n 1 -s -r -p "按任意键返回..."
+                echo                
+                ;;            
+            8)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
@@ -502,30 +573,7 @@ install_package() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo                
                 ;;
-            6)
-                echo "1) 安装"
-                echo "2) 卸载"
-                read -p "请选择操作 (默认回车退出)：" action
-                case "$action" in
-                    1) if sudo apt install -y git; then
-                            echo -e "\e[32mgit 安装完成！\e[0m"
-                        else
-                           echo -e "\e[31mgit 安装失败！\e[0m"
-                        fi
-                         ;;
-                    2)  if sudo apt remove -y git; then
-                            echo -e "\e[32mgit 卸载完成！\e[0m"
-                         else
-                            echo -e "\e[31mgit 卸载失败！\e[0m"
-                         fi
-                        ;;
-                    "") ;;
-                    *) echo -e "\e[31m无效选项，请重新输入。\e[0m" ;;
-                esac
-                read -n 1 -s -r -p "按任意键返回..."
-                echo                
-                ;;
-            7)
+            9)
                 echo "1) 安装"
                 echo "2) 卸载"
                 read -p "请选择操作 (默认回车退出)：" action
@@ -662,6 +710,7 @@ install_xray() {
         echo "========================================="
         echo "1) VLESS-WS-TLS"
         echo "2) VLESS-TCP-REALITY"
+        echo "3) 卸载服务"
         echo "========================================="
         read -p "请输入数字 [1-2] 选择 (默认回车退出)：" opt_choice
         case "$opt_choice" in
@@ -670,6 +719,18 @@ install_xray() {
             "") 
                 return
                 ;;            
+            3)
+                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge; then
+                echo -e "\e[32mXray已卸载。\e[0m"
+                else
+                echo -e "\e[31mXray卸载失败！\e[0m"
+                fi
+                read -n 1 -s -r -p "按任意键返回..."
+                echo
+                ;;
+            "") 
+                return
+                ;;                        
             *) echo -e "\e[31m无效选项，请重新输入。\e[0m" ;;
         esac
     done
@@ -684,7 +745,6 @@ install_xray_tls() {
         echo "1) 安装/升级"
         echo "2) 编辑配置"
         echo "3) 重启服务"
-        echo "4) 卸载服务"
         echo "========================================="
         read -p "请输入数字 [1-4] 选择功能 (默认回车退出)：" xray_choice
         case "$xray_choice" in
@@ -766,18 +826,6 @@ install_xray_tls() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
-            4)
-                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge; then
-                echo -e "\e[32mXray已卸载。\e[0m"
-                else
-                echo -e "\e[31mXray卸载失败！\e[0m"
-                fi
-                read -n 1 -s -r -p "按任意键返回..."
-                echo
-                ;;
-            "") 
-                return
-                ;;            
             *)
                 echo -e "\e[31m无效选项，请重新输入。\e[0m"
                 ;;
@@ -794,7 +842,6 @@ install_xray_reality() {
         echo "1) 安装/升级"
         echo "2) 编辑配置"
         echo "3) 重启服务"
-        echo "4) 卸载服务"
         echo "========================================="
         read -p "请输入数字 [1-4] 选择(默认回车退出)：" xray_choice
         case "$xray_choice" in
@@ -891,18 +938,6 @@ install_xray_reality() {
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
                 ;;
-            4)
-                if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge; then
-                echo -e "\e[32mXray已卸载。\e[0m"
-                else
-                echo -e "\e[31mXray卸载失败！\e[0m"
-                fi
-                read -n 1 -s -r -p "按任意键返回..."
-                echo
-                ;;
-            "") 
-                return
-                ;;            
             *)
                 echo -e "\e[31m无效选项，请重新输入。\e[0m"
                 ;;
