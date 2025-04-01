@@ -763,6 +763,15 @@ install_xray_tls() {
             2)
                 echo -e "\e[33m提示：将UUID填入配置文件中。若已执行成功默认设置的“安装证书”则证书路径无须修改。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."                
+                if ! command -v nano >/dev/null 2>&1; then
+                sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
+                fi
+                if command -v nano >/dev/null 2>&1; then
+                echo "成功：nano 已准备就绪。"
+                else
+                echo "失败：未能安装或找到 nano。"
+                exit 1 # 如果 nano 是必需的，在此退出
+                fi
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -867,6 +876,15 @@ install_xray_reality() {
             2)
                 echo -e "\e[33m提示：将UUID、目标网站及私钥填入配置文件中，ShortIds非必须。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."                                
+                if ! command -v nano >/dev/null 2>&1; then
+                sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
+                fi
+                if command -v nano >/dev/null 2>&1; then
+                echo "成功：nano 已准备就绪。"
+                else
+                echo "失败：未能安装或找到 nano。"
+                exit 1 # 如果 nano 是必需的，在此退出
+                fi
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
@@ -974,6 +992,15 @@ install_hysteria2() {
             2)
                 echo -e "\e[33m提示：将域名填入配置文件中。\e[0m"
                 read -n 1 -s -r -p "按任意键继续..."                                                
+                if ! command -v nano >/dev/null 2>&1; then
+                sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
+                fi
+                if command -v nano >/dev/null 2>&1; then
+                echo "成功：nano 已准备就绪。"
+                else
+                echo "失败：未能安装或找到 nano。"
+                exit 1 # 如果 nano 是必需的，在此退出
+                fi
                 sudo nano /etc/hysteria/config.yaml
                 read -n 1 -s -r -p "按任意键返回..."
                 echo
