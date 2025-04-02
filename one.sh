@@ -766,11 +766,9 @@ install_xray_tls() {
                 if ! command -v nano >/dev/null 2>&1; then
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
-                if command -v nano >/dev/null 2>&1; then
-                echo -e "\e[32mnano 已准备就绪！\e[0m"
-                else
-                echo -e "\e[31m未能安装或找到 nano！\e[0m"
-                exit 1 
+                if ! command -v nano >/dev/null 2>&1; then
+                echo -e "\033[31m错误：无法安装或找到 nano 编辑器\033[0m" >&2
+                exit 1
                 fi
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
@@ -879,11 +877,9 @@ install_xray_reality() {
                 if ! command -v nano >/dev/null 2>&1; then
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
-                if command -v nano >/dev/null 2>&1; then
-                echo -e "\e[32mnano 已准备就绪！\e[0m"
-                else
-                echo -e "\e[31m未能安装或找到 nano！\e[0m"
-                exit 1 
+                if ! command -v nano >/dev/null 2>&1; then
+                echo -e "\033[31m错误：无法安装或找到 nano 编辑器\033[0m" >&2
+                exit 1
                 fi
                 sudo nano /usr/local/etc/xray/config.json
                 read -n 1 -s -r -p "按任意键返回..."
@@ -995,11 +991,9 @@ install_hysteria2() {
                 if ! command -v nano >/dev/null 2>&1; then
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
-                if command -v nano >/dev/null 2>&1; then
-                echo -e "\e[32mnano 已准备就绪！\e[0m"
-                else
-                echo -e "\e[31m未能安装或找到 nano！\e[0m"
-                exit 1 
+                if ! command -v nano >/dev/null 2>&1; then
+                echo -e "\033[31m错误：无法安装或找到 nano 编辑器\033[0m" >&2
+                exit 1
                 fi
                 sudo nano /etc/hysteria/config.yaml
                 read -n 1 -s -r -p "按任意键返回..."
