@@ -767,7 +767,7 @@ install_xray_tls() {
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
                 if ! command -v nano >/dev/null 2>&1; then
-                echo -e "\033[31m错误：无法安装或找到 nano 编辑器\033[0m" >&2
+                echo -e "\e[31m错误：无法安装或找到 nano！\e[0m" >&2
                 exit 1
                 fi
                 sudo nano /usr/local/etc/xray/config.json
@@ -878,7 +878,7 @@ install_xray_reality() {
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
                 if ! command -v nano >/dev/null 2>&1; then
-                echo -e "\033[31m错误：无法安装或找到 nano 编辑器\033[0m" >&2
+                echo -e "\e[31m错误：无法安装或找到 nano！\e[0m" >&2
                 exit 1
                 fi
                 sudo nano /usr/local/etc/xray/config.json
@@ -992,7 +992,7 @@ install_hysteria2() {
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
                 if ! command -v nano >/dev/null 2>&1; then
-                echo -e "\033[31m错误：无法安装或找到 nano 编辑器\033[0m" >&2
+                echo -e "\e[31m错误：无法安装或找到 nano！\e[0m" >&2
                 exit 1
                 fi
                 sudo nano /etc/hysteria/config.yaml
