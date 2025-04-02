@@ -767,9 +767,9 @@ install_xray_tls() {
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
                 if command -v nano >/dev/null 2>&1; then
-                echo -e"\e[32mnano 已准备就绪！\e[0m"
+                echo -e "\e[32mnano 已准备就绪！\e[0m"
                 else
-                echo -e"\e[31m未能安装或找到 nano！\e[0m"
+                echo -e "\e[31m未能安装或找到 nano！\e[0m"
                 exit 1 
                 fi
                 sudo nano /usr/local/etc/xray/config.json
@@ -880,9 +880,9 @@ install_xray_reality() {
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
                 if command -v nano >/dev/null 2>&1; then
-                echo -e"\e[32mnano 已准备就绪！\e[0m"
+                echo -e "\e[32mnano 已准备就绪！\e[0m"
                 else
-                echo -e"\e[31m未能安装或找到 nano！\e[0m"
+                echo -e "\e[31m未能安装或找到 nano！\e[0m"
                 exit 1 
                 fi
                 sudo nano /usr/local/etc/xray/config.json
@@ -996,9 +996,9 @@ install_hysteria2() {
                 sudo apt update >/dev/null 2>&1 && sudo apt install -y nano >/dev/null 2>&1
                 fi
                 if command -v nano >/dev/null 2>&1; then
-                echo -e"\e[32mnano 已准备就绪！\e[0m"
+                echo -e "\e[32mnano 已准备就绪！\e[0m"
                 else
-                echo -e"\e[31m未能安装或找到 nano！\e[0m"
+                echo -e "\e[31m未能安装或找到 nano！\e[0m"
                 exit 1 
                 fi
                 sudo nano /etc/hysteria/config.yaml
