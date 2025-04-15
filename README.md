@@ -15,14 +15,14 @@
 ## 直接使用命令
 
 ```Bash
-bash <(curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh)
+bash <(curl -sL https://raw.githubusercontent.com/tofc88/vps-script/refs/heads/main/one.sh)
 ```
 
 ## 下载使用命令
 
 ### 下载
 ```Bash
-bash -c 'curl -sL https://raw.githubusercontent.com/sezhai/vps-script/refs/heads/main/one.sh -o /usr/local/sbin/one && chmod +x /usr/local/sbin/one && /usr/local/sbin/one'
+bash -c 'curl -sL https://raw.githubusercontent.com/tofc88/vps-script/refs/heads/main/one.sh -o /usr/local/sbin/one && chmod +x /usr/local/sbin/one && /usr/local/sbin/one'
 ```
 ### 运行
 ```Bash
